@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
 
@@ -19,6 +20,18 @@ def write_space_md(repo_path: Path, template: str = "testing") -> None:
     
     space_md.write_text(templates.get_template(template))
 
+def install_hook(repo_path: Path) -> None:
+    hook_source = Path.home() / "space" / "space-os" / "scripts" / "hooks" / "commit-msg-saas"
+    hook_dest = repo_path / ".git" / "hooks" / "commit-msg"
+    
+    if not hook_source.exists():
+        print(f"WARNING: hook template not found at {hook_source}", file=sys.stderr)
+        return
+    
+    hook_dest.parent.mkdir(parents=True, exist_ok=True)
+    hook_dest.write_text(hook_source.read_text())
+    hook_dest.chmod(0o755)
+
 def main():
     if len(sys.argv) < 6:
         print("usage: provision.py <name> <repo_path> <github_login> <repo_url> <template>", file=sys.stderr)
@@ -37,6 +50,7 @@ def main():
         repo_url=repo_url,
     )
     write_space_md(repo_path, template)
+    install_hook(repo_path)
     
     scout = agents.get_by_handle("scout")
     launch.launch(scout.id, cwd=str(repo_path))
