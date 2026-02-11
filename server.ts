@@ -179,10 +179,9 @@ app.post('/api/provision', async (req, res) => {
     const repoPath = path.join(customerDir, name)
     
     await execAsync(`git clone ${clone_url} ${repoPath}`)
-    await fs.writeFile(path.join(repoPath, 'SPACE.md'), TEMPLATES[template])
     
     const provisionScript = path.join(__dirname, 'provision.py')
-    const { stdout } = await execAsync(`python3 ${provisionScript} ${name} ${repoPath}`)
+    const { stdout } = await execAsync(`python3 ${provisionScript} ${name} ${repoPath} ${template}`)
     const projectId = stdout.trim()
     
     res.json({ project_id: projectId, repo_path: repoPath })
