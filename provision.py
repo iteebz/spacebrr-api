@@ -2,14 +2,17 @@
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from space import agents
 from space.agents import spawn
+from space.core.models import SpawnStatus
+from space.core.types import SpawnId
 from space.ctx import templates
-from space.ledger import projects, tasks
+from space.ledger import insights, projects, tasks
 from space.lib import store
 
 def write_space_md(repo_path: Path, template: str = "testing") -> None:
@@ -54,6 +57,36 @@ def create_feature_branch(repo_path: Path) -> None:
     except subprocess.CalledProcessError:
         pass
 
+def verify_spawn(spawn_id: SpawnId, project_id: str, timeout_seconds: int = 30) -> tuple[bool, str]:
+    deadline = time.monotonic() + timeout_seconds
+    spawn_active = False
+    
+    while time.monotonic() < deadline:
+        current = spawn.repo.get(spawn_id)
+        if current.status == SpawnStatus.ACTIVE and current.pid:
+            spawn_active = True
+            break
+        if current.status == SpawnStatus.DONE:
+            error = current.error or "spawn completed before becoming active"
+            return False, f"spawn failed: {error}"
+        time.sleep(0.5)
+    
+    if not spawn_active:
+        return False, "spawn did not start within 30s"
+    
+    ledger_deadline = time.monotonic() + 30
+    while time.monotonic() < ledger_deadline:
+        with store.ensure() as conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM insights WHERE project_id = ? AND deleted_at IS NULL",
+                (project_id,),
+            ).fetchone()[0]
+            if count > 0:
+                return True, "verified"
+        time.sleep(1)
+    
+    return False, "no ledger writes within 30s"
+
 def main():
     if len(sys.argv) < 6:
         print("usage: provision.py <name> <repo_path> <github_login> <repo_url> <template>", file=sys.stderr)
@@ -86,13 +119,19 @@ def main():
     
     try:
         scout = agents.get_by_handle("scout")
-        spawn.launch(
+        result = spawn.launch(
             agent_id=scout.id,
             cwd=str(repo_path),
             write_starting_event=True,
         )
+        
+        verified, msg = verify_spawn(result.id, project.id)
+        if not verified:
+            print(f"ERROR: {msg}", file=sys.stderr)
+            sys.exit(1)
     except Exception as e:
-        print(f"WARNING: failed to spawn scout: {e}", file=sys.stderr)
+        print(f"ERROR: failed to spawn scout: {e}", file=sys.stderr)
+        sys.exit(1)
     
     print(project.id)
 
