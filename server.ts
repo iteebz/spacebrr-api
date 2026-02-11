@@ -1,6 +1,7 @@
 import express from 'express'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
+import { randomUUID } from 'crypto'
 import path from 'path'
 import fs from 'fs/promises'
 import os from 'os'
@@ -32,17 +33,32 @@ if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
 }
 
 const sessions = new Map<string, { token: string, githubUser: string }>()
+const oauthStates = new Map<string, { created: number }>()
 
 app.get('/auth/github', (req, res) => {
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=repo`
+  const state = randomUUID()
+  oauthStates.set(state, { created: Date.now() })
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=repo&state=${state}`
   res.redirect(githubAuthUrl)
 })
 
 app.get('/auth/github/callback', async (req, res) => {
   const code = req.query.code as string
+  const state = req.query.state as string
   
   if (!code) {
     return res.status(400).send('No code provided')
+  }
+
+  if (!state || !oauthStates.has(state)) {
+    return res.status(400).send('Invalid or missing state parameter')
+  }
+
+  const stateData = oauthStates.get(state)!
+  oauthStates.delete(state)
+  
+  if (Date.now() - stateData.created > 600000) {
+    return res.status(400).send('State expired')
   }
 
   try {
@@ -70,7 +86,7 @@ app.get('/auth/github/callback', async (req, res) => {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     const userData = await userResponse.json()
-    const sessionId = Math.random().toString(36).substring(7)
+    const sessionId = randomUUID()
     sessions.set(sessionId, { token: accessToken, githubUser: userData.login })
 
     res.send(`
