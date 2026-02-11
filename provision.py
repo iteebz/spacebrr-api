@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from space.ctx import templates
-from space.ledger import projects
+from space.ledger import projects, tasks
 
 def write_space_md(repo_path: Path, template: str = "testing") -> None:
     if not templates.template_exists(template):
@@ -71,6 +71,15 @@ def main():
     write_space_md(repo_path, template)
     install_hook(repo_path)
     create_feature_branch(repo_path)
+    
+    task = tasks.create(
+        project_id=project.id,
+        creator_id="system",
+        content=f"analyze {name} codebase and begin work on {template} vector",
+    )
+    
+    scout = agents.get("scout")
+    launch.launch(scout.id, cwd=str(repo_path))
     
     print(project.id)
 
