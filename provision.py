@@ -68,11 +68,11 @@ def verify_spawn(spawn_id: SpawnId, project_id: str, timeout_seconds: int = 30) 
             break
         if current.status == SpawnStatus.DONE:
             error = current.error or "spawn completed before becoming active"
-            return False, f"spawn failed: {error}"
+            return False, f"spawn {spawn_id[:8]} failed: {error}"
         time.sleep(0.5)
     
     if not spawn_active:
-        return False, "spawn did not start within 30s"
+        return False, f"spawn {spawn_id[:8]} did not start within {timeout_seconds}s"
     
     ledger_deadline = time.monotonic() + 30
     while time.monotonic() < ledger_deadline:
@@ -82,10 +82,10 @@ def verify_spawn(spawn_id: SpawnId, project_id: str, timeout_seconds: int = 30) 
                 (project_id,),
             ).fetchone()[0]
             if count > 0:
-                return True, "verified"
+                return True, f"spawn {spawn_id[:8]} verified"
         time.sleep(1)
     
-    return False, "no ledger writes within 30s"
+    return False, f"spawn {spawn_id[:8]} active but no ledger writes within 30s"
 
 def main():
     if len(sys.argv) < 6:
