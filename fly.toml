@@ -1,9 +1,6 @@
 app = 'spacebrr-api'
 primary_region = 'syd'
 
-[build]
-  builder = 'heroku/buildpacks:20'
-
 [env]
   PORT = '8080'
 
