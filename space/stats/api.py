@@ -6,6 +6,7 @@ from space.lib import store
 
 from .decision import flow as decisions_flow
 from .decision import precision as decisions_precision
+from . import retention
 from .swarm import absence_metrics, artifacts_per_spawn, live, loop_frequency, status
 
 
@@ -144,6 +145,10 @@ def health_payload(hours: int = 24) -> dict[str, Any]:
         "loop_max": loop["max_consecutive"],
         "schema_drift": schema_drift,
     }
+
+
+def retention_payload(project_id: str | None = None) -> dict[str, Any]:
+    return retention.summary(project_id)
 
 
 def colony_payload(hours: int = 24) -> dict[str, Any]:
