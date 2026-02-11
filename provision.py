@@ -4,6 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.home() / "space" / "space-os"))
 
+from space import agents
+from space.agents.spawn import launch
 from space.ctx import templates
 from space.ledger import projects
 
@@ -28,6 +30,10 @@ def main():
     
     project = projects.create(name, str(repo_path))
     write_space_md(repo_path, template)
+    
+    scout = agents.get_by_handle("scout")
+    launch.launch(scout.id, cwd=str(repo_path))
+    
     print(project.id)
 
 if __name__ == "__main__":
