@@ -6,6 +6,29 @@ All prior callable migrations (002-011) are folded into 001_foundation.sql.
 import sqlite3
 
 
+def migration_003_add_pr_events(conn: sqlite3.Connection) -> None:
+    conn.execute("""
+        CREATE TABLE pr_events (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            event_type TEXT NOT NULL CHECK(event_type IN ('opened', 'merged', 'closed')),
+            pr_number INTEGER NOT NULL,
+            repo_name TEXT NOT NULL,
+            author TEXT NOT NULL,
+            merged_by TEXT,
+            created_at TEXT NOT NULL,
+            merged_at TEXT,
+            UNIQUE(project_id, pr_number, event_type)
+        )
+    """)
+
+    conn.execute("CREATE INDEX idx_pr_events_project ON pr_events(project_id)")
+    conn.execute("CREATE INDEX idx_pr_events_created ON pr_events(created_at)")
+    conn.execute("CREATE INDEX idx_pr_events_type ON pr_events(event_type)")
+
+    conn.commit()
+
+
 def migration_018_health_suppressions(conn: sqlite3.Connection) -> None:
     cursor = conn.execute("PRAGMA table_info(health_metrics)")
     columns = {row[1] for row in cursor.fetchall()}

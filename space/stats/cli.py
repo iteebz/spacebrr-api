@@ -18,6 +18,8 @@ def render(
     governance: bool = False,
     projects: bool = False,
     absence: bool = False,
+    retention_flag: bool = False,
+    project_id: str | None = None,
     export: str | None = None,
     json_output: bool = False,
 ) -> None:
@@ -182,6 +184,29 @@ def render(
         echo(f"  tasks: {data['tasks_autonomous']}/{data['tasks_total']} completed autonomously")
         return
 
+    if retention_flag:
+        ret = retention.summary(project_id)
+        if json_output:
+            echo(json.dumps(ret, indent=2))
+            return
+        mr = ret["merge_rate"]
+        echo(f"[RETENTION METRICS] {mr['days']}d")
+        echo(f"  merge rate: {mr['rate']}% ({mr['merged_blind']}/{mr['opened']} PRs)")
+        if ret["engagement"]:
+            echo("\n[ENGAGEMENT]")
+            for e in ret["engagement"][:10]:
+                echo(f"  {e['project_name']}: {e['spawns_per_day']}/day ({e['spawns']} spawns)")
+        if ret["compounding"]:
+            c = ret["compounding"]
+            if c["delta"] is not None:
+                echo(f"\n[COMPOUNDING]")
+                echo(f"  d{c['baseline_day']} score: {c['baseline_score']}")
+                echo(f"  d{c['target_day']} score: {c['target_score']}")
+                echo(f"  delta: {c['delta']:+.1f}")
+            else:
+                echo("\n[COMPOUNDING] insufficient data")
+        return
+
     summary = stats.get_summary(hours)
 
     if json_output:
@@ -294,6 +319,8 @@ def main() -> None:
     parser.add_argument("--governance", action="store_true", help="Show governance metrics")
     parser.add_argument("-p", "--projects", action="store_true", help="Show spawns per project")
     parser.add_argument("-a", "--absence", action="store_true", help="Show human absence metrics")
+    parser.add_argument("-r", "--retention", action="store_true", help="Show retention metrics")
+    parser.add_argument("--project-id", help="Filter retention by project")
     parser.add_argument("-s", "--spawns", type=int, help="Show last N spawns")
     parser.add_argument("--export", help="Export public stats to file")
     parser.add_argument("-o", "--overnight", action="store_true", help="Morning report format")
@@ -317,6 +344,8 @@ def main() -> None:
         args.governance,
         args.projects,
         args.absence,
+        args.retention,
+        args.project_id,
         args.export,
         json_output=args.json,
     )
