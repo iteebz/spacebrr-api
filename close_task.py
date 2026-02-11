@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path.home() / "space" / "space-os"))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from space.ledger import tasks
 from space.core.models import TaskStatus

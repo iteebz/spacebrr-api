@@ -3,10 +3,8 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path.home() / "space" / "space-os"))
+sys.path.insert(0, str(Path(__file__).parent))
 
-from space import agents
-from space.agents.spawn import launch
 from space.ctx import templates
 from space.ledger import projects
 
@@ -21,7 +19,7 @@ def write_space_md(repo_path: Path, template: str = "testing") -> None:
     space_md.write_text(templates.get_template(template))
 
 def install_hook(repo_path: Path) -> None:
-    hook_source = Path.home() / "space" / "space-os" / "scripts" / "hooks" / "commit-msg-saas"
+    hook_source = Path(__file__).parent / "space" / "ctx" / "hooks" / "commit-msg-saas"
     hook_dest = repo_path / ".git" / "hooks" / "commit-msg"
     
     if not hook_source.exists():
@@ -51,9 +49,6 @@ def main():
     )
     write_space_md(repo_path, template)
     install_hook(repo_path)
-    
-    scout = agents.get_by_handle("scout")
-    launch.launch(scout.id, cwd=str(repo_path))
     
     print(project.id)
 

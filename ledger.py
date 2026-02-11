@@ -3,7 +3,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path.home() / "space" / "space-os"))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from space.core.types import ProjectId
 from space.ledger import decisions, insights, projects, tasks

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -e
+
+commit_msg_file="${1:-.git/COMMIT_EDITMSG}"
+commit_msg=$(cat "$commit_msg_file")
+
+subject=$(echo "$commit_msg" | head -1)
+body=$(echo "$commit_msg" | tail -n +3)
+
+trailer=$(echo "$body" | grep "^space: " || true)
+
+if [ -z "$trailer" ]; then
+    exit 0
+fi
+
+refs=$(echo "$trailer" | sed 's/^space: //')
+if ! echo "$refs" | grep -qE '^[tid]/[a-f0-9]{8}( *, *[tid]/[a-f0-9]{8})*$'; then
+    echo "WARNING: Invalid trailer format: $trailer" >&2
+    exit 0
+fi
+
+task_refs=$(echo "$refs" | grep -oE 't/[a-f0-9]{8}' || true)
+if [ -z "$task_refs" ]; then
+    exit 0
+fi
+
+if [ -z "$SPACE_API_URL" ] || [ -z "$SPACE_API_KEY" ]; then
+    echo "WARNING: SPACE_API_URL or SPACE_API_KEY not set, cannot auto-close tasks" >&2
+    exit 0
+fi
+
+for task_ref in $task_refs; do
+    task_id=$(echo "$task_ref" | cut -d'/' -f2)
+    curl -s -X PATCH \
+        -H "Authorization: Bearer $SPACE_API_KEY" \
+        -H "Content-Type: application/json" \
+        "$SPACE_API_URL/api/tasks/$task_id/close" \
+        >/dev/null 2>&1 || true
+done
+
+exit 0

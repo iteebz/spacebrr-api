@@ -1,0 +1,72 @@
+"""Database connection management and utilities."""
+
+from space.lib.store.connection import (
+    ARCHIVABLE_TABLES,
+    Row,
+    _reset_for_testing,
+    close_all,
+    database_exists,
+    ensure,
+    existing,
+    from_row,
+    set_test_db_path,
+    transaction,
+    unarchive,
+    write,
+)
+from space.lib.store.health import (
+    IntegrityResult,
+    PrimitiveCount,
+    check_backup_has_data,
+    check_database_integrity,
+    check_schema_drift,
+    compare_snapshots,
+    get_backup_stats,
+    repair_fts_if_needed,
+)
+from space.lib.store.query import Query, q
+from space.lib.store.resolve import (
+    PREFIXES,
+    TABLE_PREFIX,
+    ref,
+    resolve,
+    resolve_short,
+    strip_prefix,
+)
+from space.lib.store.sqlite import checkpoint_wal, connect, fts_search, fts_tokenize, placeholders
+
+__all__ = [
+    "ARCHIVABLE_TABLES",
+    "PREFIXES",
+    "TABLE_PREFIX",
+    "IntegrityResult",
+    "PrimitiveCount",
+    "Query",
+    "Row",
+    "_reset_for_testing",
+    "check_backup_has_data",
+    "check_database_integrity",
+    "check_schema_drift",
+    "checkpoint_wal",
+    "close_all",
+    "compare_snapshots",
+    "connect",
+    "database_exists",
+    "ensure",
+    "existing",
+    "from_row",
+    "fts_search",
+    "fts_tokenize",
+    "get_backup_stats",
+    "placeholders",
+    "q",
+    "ref",
+    "repair_fts_if_needed",
+    "resolve",
+    "resolve_short",
+    "set_test_db_path",
+    "strip_prefix",
+    "transaction",
+    "unarchive",
+    "write",
+]
