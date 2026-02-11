@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Select Repo — Space</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      h1 { margin-bottom: 30px; }
+      .repo {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .repo:hover {
+        background: #f5f5f5;
+      }
+      .repo-name { font-weight: bold; }
+      .repo-desc { color: #666; font-size: 0.9em; }
+      .status { margin-top: 20px; color: #666; }
+    </style>
+  </head>
+  <body>
+    <h1>Select a repository</h1>
+    <div id="repos"></div>
+    <div class="status" id="status"></div>
+
+    <script>
+      const sessionId = localStorage.getItem('session_id')
+      if (!sessionId) {
+        window.location.href = '/'
+      }
+
+      const reposDiv = document.getElementById('repos')
+      const statusDiv = document.getElementById('status')
+
+      fetch('/api/repos', {
+        headers: { Authorization: `Bearer ${sessionId}` }
+      })
+        .then(r => r.json())
+        .then(repos => {
+          repos.forEach(repo => {
+            const div = document.createElement('div')
+            div.className = 'repo'
+            div.innerHTML = `
+              <div class="repo-name">${repo.full_name}</div>
+              <div class="repo-desc">${repo.description || 'No description'}</div>
+            `
+            div.onclick = () => provision(repo)
+            reposDiv.appendChild(div)
+          })
+        })
+        .catch(err => {
+          statusDiv.textContent = `Error: ${err.message}`
+        })
+
+      function provision(repo) {
+        statusDiv.textContent = `Provisioning ${repo.name}...`
+        fetch('/api/provision', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionId}`
+          },
+          body: JSON.stringify({
+            clone_url: repo.clone_url,
+            name: repo.name
+          })
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.error) {
+              statusDiv.textContent = `Error: ${data.error}`
+            } else {
+              window.location.href = `/dashboard/${data.project_id}`
+            }
+          })
+          .catch(err => {
+            statusDiv.textContent = `Error: ${err.message}`
+          })
+      }
+    </script>
+  </body>
+</html>
