@@ -72,14 +72,22 @@ def main():
     install_hook(repo_path)
     create_feature_branch(repo_path)
     
-    task = tasks.create(
+    tasks.create(
         project_id=project.id,
-        creator_id="system",
+        creator_id="scout",
         content=f"analyze {name} codebase and begin work on {template} vector",
     )
     
-    scout = agents.get("scout")
-    launch.launch(scout.id, cwd=str(repo_path))
+    try:
+        subprocess.Popen(
+            ["space", "@", "scout"],
+            cwd=repo_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (FileNotFoundError, OSError):
+        pass
     
     print(project.id)
 
