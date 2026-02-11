@@ -314,6 +314,40 @@ app.get('/dashboard/:projectId', (req, res) => {
   `)
 })
 
+app.post('/api/webhook/github', async (req, res) => {
+  const event = req.headers['x-github-event'] as string
+  
+  if (event !== 'pull_request') {
+    return res.status(200).json({ message: 'Event ignored' })
+  }
+  
+  const { action, pull_request, repository } = req.body
+  if (!['opened', 'closed'].includes(action)) {
+    return res.status(200).json({ message: 'Action ignored' })
+  }
+  
+  const isMerged = action === 'closed' && pull_request.merged
+  const eventType = action === 'opened' ? 'opened' : (isMerged ? 'merged' : 'closed')
+  
+  try {
+    const webhookScript = path.join(__dirname, 'space', 'lib', 'webhook_pr.py')
+    await execFileAsync('python3', [
+      webhookScript,
+      eventType,
+      String(pull_request.number),
+      repository.full_name,
+      pull_request.user.login,
+      pull_request.merged_by?.login || '',
+      pull_request.created_at,
+      pull_request.merged_at || '',
+    ])
+    res.json({ success: true })
+  } catch (error: any) {
+    console.error('Webhook processing failed:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })

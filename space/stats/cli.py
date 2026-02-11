@@ -6,6 +6,7 @@ from space import stats
 from space.lib import git
 from space.lib.commands import echo, fail, space_cmd
 from space.lib.display import stats as stats_display
+from space.stats import retention
 
 
 def render(
