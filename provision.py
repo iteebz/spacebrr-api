@@ -20,15 +20,22 @@ def write_space_md(repo_path: Path, template: str = "testing") -> None:
     space_md.write_text(templates.get_template(template))
 
 def main():
-    if len(sys.argv) < 3:
-        print("usage: provision.py <name> <repo_path> [template]", file=sys.stderr)
+    if len(sys.argv) < 6:
+        print("usage: provision.py <name> <repo_path> <github_login> <repo_url> <template>", file=sys.stderr)
         sys.exit(1)
     
     name = sys.argv[1]
     repo_path = Path(sys.argv[2])
-    template = sys.argv[3] if len(sys.argv) > 3 else "testing"
+    github_login = sys.argv[3]
+    repo_url = sys.argv[4]
+    template = sys.argv[5] if len(sys.argv) > 5 else "testing"
     
-    project = projects.create(name, str(repo_path))
+    project = projects.create_customer(
+        name=name,
+        repo_path=str(repo_path),
+        github_login=github_login,
+        repo_url=repo_url,
+    )
     write_space_md(repo_path, template)
     
     scout = agents.get_by_handle("scout")

@@ -164,9 +164,9 @@ app.post('/api/provision', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  const { clone_url, name, template } = req.body
-  if (!clone_url || !name || !template) {
-    return res.status(400).json({ error: 'Missing clone_url, name, or template' })
+  const { clone_url, name, template, full_name } = req.body
+  if (!clone_url || !name || !template || !full_name) {
+    return res.status(400).json({ error: 'Missing clone_url, name, template, or full_name' })
   }
 
   if (!TEMPLATES[template]) {
@@ -181,10 +181,12 @@ app.post('/api/provision', async (req, res) => {
     await execAsync(`git clone ${clone_url} ${repoPath}`)
     
     const provisionScript = path.join(__dirname, 'provision.py')
-    const { stdout } = await execAsync(`python3 ${provisionScript} ${name} ${repoPath} ${template}`)
+    const { stdout } = await execAsync(
+      `python3 ${provisionScript} ${name} ${repoPath} ${session.githubUser} ${clone_url} ${template}`
+    )
     const projectId = stdout.trim()
     
-    res.json({ project_id: projectId, repo_path: repoPath })
+    res.json({ project_id: projectId, repo_path: repoPath, full_name })
   } catch (error: any) {
     res.status(500).json({ error: error.message })
   }
