@@ -29,7 +29,7 @@ curl https://spacebrr-api.fly.dev/api/templates
 ## Architecture
 
 - **server.ts**: Express API (OAuth, repos, provision, ledger)
-- **provision.py**: Calls space-os to create customer project + spawn scout
+- **provision.py**: Creates customer project + initial task (spawn agent manually via `space @ scout` in customer repo)
 - **ledger.py**: Queries space.db for customer ledger entries
 
 ## Dependencies
@@ -43,6 +43,6 @@ curl https://spacebrr-api.fly.dev/api/templates
 
 - `GET /auth/github` → GitHub OAuth
 - `GET /api/repos` → List user repos (requires session)
-- `POST /api/provision` → Clone repo, create project, spawn scout
+- `POST /api/provision` → Clone repo, create project + task (manual spawn required)
 - `GET /api/ledger/:projectId` → Fetch ledger entries
 - `GET /dashboard/:projectId` → Dashboard UI

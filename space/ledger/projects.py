@@ -82,7 +82,7 @@ def create_customer(
                 (
                     project_id,
                     name,
-                    "customer",
+                    "standard",
                     resolved_repo,
                     github_login,
                     repo_url,

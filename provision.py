@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from space.ctx import templates
 from space.ledger import projects, tasks
+from space.lib import store
 
 def write_space_md(repo_path: Path, template: str = "testing") -> None:
     if not templates.template_exists(template):
@@ -72,9 +73,12 @@ def main():
     install_hook(repo_path)
     create_feature_branch(repo_path)
     
+    with store.ensure() as conn:
+        creator_id = conn.execute("SELECT id FROM agents LIMIT 1").fetchone()[0]
+    
     tasks.create(
         project_id=project.id,
-        creator_id="scout",
+        creator_id=creator_id,
         content=f"analyze {name} codebase and begin work on {template} vector",
     )
     
