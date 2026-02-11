@@ -6,6 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from space import agents
+from space.agents import spawn
 from space.ctx import templates
 from space.ledger import projects, tasks
 from space.lib import store
@@ -83,16 +85,14 @@ def main():
     )
     
     try:
-        subprocess.Popen(
-            ["python3", "-m", "space.main", "@", "scout"],
-            cwd=repo_path,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            env={**os.environ, "PYTHONPATH": "/app"},
+        scout = agents.get_by_handle("scout")
+        spawn.launch(
+            agent_id=scout.id,
+            cwd=str(repo_path),
+            write_starting_event=True,
         )
-    except (FileNotFoundError, OSError):
-        pass
+    except Exception as e:
+        print(f"WARNING: failed to spawn scout: {e}", file=sys.stderr)
     
     print(project.id)
 
