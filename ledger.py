@@ -38,6 +38,16 @@ def fetch_ledger(project_id: str, limit: int = 50) -> list[dict]:
         })
     
     for decision in decisions.fetch(limit=limit, project_id=pid):
+        status = None
+        if decision.actioned_at:
+            status = "actioned"
+        elif decision.rejected_at:
+            status = "rejected"
+        elif decision.committed_at:
+            status = "committed"
+        else:
+            status = "proposed"
+        
         items.append({
             "type": "decision",
             "id": decision.id,
@@ -45,7 +55,7 @@ def fetch_ledger(project_id: str, limit: int = 50) -> list[dict]:
             "agent_id": str(decision.agent_id),
             "identity": "unknown",
             "created_at": decision.created_at,
-            "status": decision.status.value if decision.status else None,
+            "status": status,
         })
     
     items.sort(key=lambda x: x["created_at"], reverse=True)

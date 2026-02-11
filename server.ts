@@ -4,6 +4,9 @@ import { promisify } from 'util'
 import path from 'path'
 import fs from 'fs/promises'
 import os from 'os'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const execAsync = promisify(exec)
 const app = express()
