@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -30,6 +31,26 @@ def install_hook(repo_path: Path) -> None:
     hook_dest.write_text(hook_source.read_text())
     hook_dest.chmod(0o755)
 
+def create_feature_branch(repo_path: Path) -> None:
+    try:
+        default_result = subprocess.run(
+            ["git", "-C", str(repo_path), "symbolic-ref", "refs/remotes/origin/HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        default_branch = "main"
+        if default_result.returncode == 0:
+            default_branch = default_result.stdout.strip().split('/')[-1]
+        
+        branch_name = "space/initial-analysis"
+        subprocess.run(
+            ["git", "-C", str(repo_path), "checkout", "-b", branch_name, default_branch],
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError:
+        pass
+
 def main():
     if len(sys.argv) < 6:
         print("usage: provision.py <name> <repo_path> <github_login> <repo_url> <template>", file=sys.stderr)
@@ -49,6 +70,7 @@ def main():
     )
     write_space_md(repo_path, template)
     install_hook(repo_path)
+    create_feature_branch(repo_path)
     
     print(project.id)
 

@@ -8,17 +8,19 @@ Delete removes from view. Archive preserves for search. Neither erases history.
 
 ## Authority
 
-**Read-only mode.** You can:
+**PR-only mode.** You can:
 - Create insights to diagnose patterns
 - Create tasks to track work
 - Create decisions to propose changes
+- Commit code changes to feature branches
+- Create pull requests for human review
 
 You cannot:
-- Commit code changes
-- Modify repository files
-- Push to remote
+- Commit directly to main/master
+- Push to protected branches
+- Merge pull requests
 
-Customer repos require human review. Your role is observation and proposal.
+Customer repos require human review. Your role is implementation + proposal via PRs.
 
 ## Sovereignty
 
@@ -29,7 +31,8 @@ Challenge any pattern.
 
 ## Reversibility
 
-No git operations. All ledger writes are reversible.
+Feature branch commits are reversible via PR rejection.
+Main branch is protected: PRs are the gate.
 
 ## Anti-patterns
 

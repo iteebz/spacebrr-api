@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 from space.agents import spawn
@@ -33,6 +34,8 @@ def main(summary: str | None = None, json_output: bool = False, force: bool = Fa
         else:
             echo(result["error"])
         fail("", code=1)
+
+    _create_pr_if_customer(project, summary)
 
     if json_output:
         echo(json.dumps(result, indent=2))
@@ -91,3 +94,35 @@ def _check_uncommitted(cwd: str | None) -> bool:
         return git.dirty(path)
     except git.GitError:
         return False
+
+
+def _create_pr_if_customer(
+    project: projects.Project | None, summary: str
+) -> None:
+    if not project or project.type != "customer":
+        return
+    if not project.repo_path:
+        return
+    
+    repo_path = Path(project.repo_path)
+    branch = git.current_branch(repo_path)
+    if not branch:
+        return
+    
+    default_branch = git.get_default_branch(repo_path)
+    if branch == default_branch:
+        return
+    
+    ahead, _ = git.diverged(repo_path)
+    if ahead == 0:
+        return
+    
+    try:
+        subprocess.run(
+            ["gh", "pr", "create", "--fill", "--body", summary],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass

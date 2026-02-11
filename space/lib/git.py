@@ -333,6 +333,14 @@ def branch_exists(bare_repo: Path, branch: str) -> bool:
     return result.returncode == 0
 
 
+def current_branch(repo: Path) -> str | None:
+    """Get current branch name. Returns None if detached HEAD."""
+    result = _run_silent(["git", "-C", str(repo), "symbolic-ref", "--short", "HEAD"])
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
 def sanitize_branch(name: str) -> str:
     """Convert a string to a valid git branch name."""
     safe = name.lower()
