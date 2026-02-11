@@ -192,12 +192,69 @@ app.post('/api/provision', async (req, res) => {
   }
 })
 
+app.get('/api/ledger/:projectId', async (req, res) => {
+  const { projectId } = req.params
+  const limit = parseInt(req.query.limit as string) || 50
+  
+  try {
+    const ledgerScript = path.join(__dirname, 'ledger.py')
+    const { stdout } = await execAsync(`python3 ${ledgerScript} ${projectId} ${limit}`)
+    res.json(JSON.parse(stdout))
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.get('/select', (req, res) => {
   res.sendFile(path.join(__dirname, 'select.html'))
 })
 
 app.get('/dashboard/:projectId', (req, res) => {
-  res.send(`<h1>Dashboard</h1><p>Project: ${req.params.projectId}</p><p>Ledger will appear here.</p>`)
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Dashboard</title>
+      <style>
+        body { font-family: system-ui; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { margin-bottom: 2rem; }
+        .ledger-item { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .ledger-item h3 { margin: 0 0 0.5rem 0; }
+        .meta { color: #666; font-size: 0.9rem; }
+        .loading { text-align: center; padding: 2rem; }
+      </style>
+    </head>
+    <body>
+      <h1>Dashboard</h1>
+      <div id="ledger" class="loading">Loading ledger...</div>
+      <script>
+        const projectId = '${req.params.projectId}'
+        fetch('/api/ledger/' + projectId)
+          .then(r => r.json())
+          .then(items => {
+            const ledger = document.getElementById('ledger')
+            if (items.length === 0) {
+              ledger.innerHTML = '<p>No ledger entries yet. Swarm is starting...</p>'
+              return
+            }
+            ledger.className = ''
+            ledger.innerHTML = items.map(item => \`
+              <div class="ledger-item">
+                <h3>\${item.type}: \${item.content.substring(0, 100)}\${item.content.length > 100 ? '...' : ''}</h3>
+                <div class="meta">
+                  \${item.identity} • \${new Date(item.created_at).toLocaleString()}
+                  \${item.status ? ' • ' + item.status : ''}
+                </div>
+              </div>
+            \`).join('')
+          })
+          .catch(err => {
+            document.getElementById('ledger').innerHTML = '<p>Error loading ledger: ' + err.message + '</p>'
+          })
+      </script>
+    </body>
+    </html>
+  `)
 })
 
 app.listen(PORT, () => {
