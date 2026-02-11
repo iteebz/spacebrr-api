@@ -142,10 +142,8 @@ def set_status(
                 (status.value, task_id),
             )
         elif status in (TaskStatus.DONE, TaskStatus.CANCELLED):
-            if current == TaskStatus.ACTIVE:
-                if not agent_id:
-                    raise ValidationError("agent_id required to complete active task")
-                if task.assignee_id and task.assignee_id != agent_id:
+            if current == TaskStatus.ACTIVE and agent_id and task.assignee_id:
+                if task.assignee_id != agent_id:
                     raise ValidationError(f"Task not claimed by agent '{agent_id}'")
             conn.execute(
                 "UPDATE tasks SET status = ?, completed_at = ?, result = ? WHERE id = ?",
