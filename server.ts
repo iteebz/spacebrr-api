@@ -28,14 +28,13 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback'
 
-if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-  throw new Error('GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be set')
-}
-
 const sessions = new Map<string, { token: string, githubUser: string }>()
 const oauthStates = new Map<string, { created: number }>()
 
 app.get('/auth/github', (req, res) => {
+  if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+    return res.status(503).send('OAuth not configured')
+  }
   const state = randomUUID()
   oauthStates.set(state, { created: Date.now() })
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=repo&state=${state}`
