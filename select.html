@@ -28,8 +28,9 @@
     </style>
   </head>
   <body>
-    <h1>Select a repository</h1>
+    <h1 id="heading">Select a repository</h1>
     <div id="repos"></div>
+    <div id="templates" style="display: none;"></div>
     <div class="status" id="status"></div>
 
     <script>
@@ -39,7 +40,11 @@
       }
 
       const reposDiv = document.getElementById('repos')
+      const templatesDiv = document.getElementById('templates')
       const statusDiv = document.getElementById('status')
+      const heading = document.getElementById('heading')
+
+      let selectedRepo = null
 
       fetch('/api/repos', {
         headers: { Authorization: `Bearer ${sessionId}` }
@@ -53,7 +58,7 @@
               <div class="repo-name">${repo.full_name}</div>
               <div class="repo-desc">${repo.description || 'No description'}</div>
             `
-            div.onclick = () => provision(repo)
+            div.onclick = () => selectRepo(repo)
             reposDiv.appendChild(div)
           })
         })
@@ -61,8 +66,32 @@
           statusDiv.textContent = `Error: ${err.message}`
         })
 
-      function provision(repo) {
-        statusDiv.textContent = `Provisioning ${repo.name}...`
+      function selectRepo(repo) {
+        selectedRepo = repo
+        reposDiv.style.display = 'none'
+        templatesDiv.style.display = 'block'
+        heading.textContent = 'Choose your goal'
+
+        fetch('/api/templates', {
+          headers: { Authorization: `Bearer ${sessionId}` }
+        })
+          .then(r => r.json())
+          .then(templates => {
+            templates.forEach(template => {
+              const div = document.createElement('div')
+              div.className = 'repo'
+              div.innerHTML = `<div class="repo-name">${template.name}</div>`
+              div.onclick = () => provision(template.id)
+              templatesDiv.appendChild(div)
+            })
+          })
+          .catch(err => {
+            statusDiv.textContent = `Error: ${err.message}`
+          })
+      }
+
+      function provision(template) {
+        statusDiv.textContent = `Provisioning ${selectedRepo.name}...`
         fetch('/api/provision', {
           method: 'POST',
           headers: {
@@ -70,8 +99,9 @@
             Authorization: `Bearer ${sessionId}`
           },
           body: JSON.stringify({
-            clone_url: repo.clone_url,
-            name: repo.name
+            clone_url: selectedRepo.clone_url,
+            name: selectedRepo.name,
+            template: template
           })
         })
           .then(r => r.json())

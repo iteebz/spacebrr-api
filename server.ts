@@ -97,6 +97,65 @@ app.get('/api/repos', async (req, res) => {
   }
 })
 
+const TEMPLATES: Record<string, string> = {
+  testing: `## Vector
+
+Comprehensive test coverage: unit tests for core logic, integration tests for workflows, property tests for edge cases.
+
+## Constraints
+
+- Tests break when behavior breaks, not when code changes
+- Fast feedback: unit tests < 100ms, full suite < 30s
+- Follow repo test conventions`,
+
+  types: `## Vector
+
+Strict type safety: eliminate any, fix type errors, add missing annotations, enable strict mode.
+
+## Constraints
+
+- Preserve runtime behavior
+- Follow repo type conventions
+- Incremental progress: fix one module at a time`,
+
+  complexity: `## Vector
+
+Reduce cognitive load: extract functions, eliminate deep nesting, simplify conditionals, remove duplication.
+
+## Constraints
+
+- Preserve functionality
+- One refactor per commit
+- Measure: cyclomatic complexity down, readability up`,
+
+  docs: `## Vector
+
+Clear documentation: README with setup/usage, inline comments for non-obvious code, architecture diagrams for system overview.
+
+## Constraints
+
+- Docs live close to code
+- Examples are executable and tested
+- Update docs when code changes`,
+
+  security: `## Vector
+
+Harden security: input validation, secret management, dependency updates, vulnerability patches.
+
+## Constraints
+
+- No breaking changes to public API
+- Security fixes ship immediately
+- Document threat model assumptions`,
+}
+
+app.get('/api/templates', (req, res) => {
+  res.json(Object.keys(TEMPLATES).map(key => ({
+    id: key,
+    name: key.charAt(0).toUpperCase() + key.slice(1),
+  })))
+})
+
 app.post('/api/provision', async (req, res) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '')
   const session = sessionId ? sessions.get(sessionId) : null
@@ -105,9 +164,13 @@ app.post('/api/provision', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  const { clone_url, name } = req.body
-  if (!clone_url || !name) {
-    return res.status(400).json({ error: 'Missing clone_url or name' })
+  const { clone_url, name, template } = req.body
+  if (!clone_url || !name || !template) {
+    return res.status(400).json({ error: 'Missing clone_url, name, or template' })
+  }
+
+  if (!TEMPLATES[template]) {
+    return res.status(400).json({ error: 'Invalid template' })
   }
 
   try {
@@ -116,17 +179,7 @@ app.post('/api/provision', async (req, res) => {
     const repoPath = path.join(customerDir, name)
     
     await execAsync(`git clone ${clone_url} ${repoPath}`)
-    
-    const spaceTemplate = `## Vector
-
-Improve code quality: reduce complexity, add tests, fix type errors.
-
-## Constraints
-
-- Preserve existing functionality
-- Follow repo conventions
-`
-    await fs.writeFile(path.join(repoPath, 'SPACE.md'), spaceTemplate)
+    await fs.writeFile(path.join(repoPath, 'SPACE.md'), TEMPLATES[template])
     
     const provisionScript = path.join(__dirname, 'provision.py')
     const { stdout } = await execAsync(`python3 ${provisionScript} ${name} ${repoPath}`)
