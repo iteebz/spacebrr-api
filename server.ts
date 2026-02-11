@@ -1,5 +1,5 @@
 import express from 'express'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
 import fs from 'fs/promises'
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 const app = express()
 
 app.use((req, res, next) => {
@@ -23,9 +23,13 @@ app.use(express.json())
 
 const PORT = process.env.PORT || 3000
 
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || ''
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || ''
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback'
+
+if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+  throw new Error('GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be set')
+}
 
 const sessions = new Map<string, { token: string, githubUser: string }>()
 
@@ -190,12 +194,17 @@ app.post('/api/provision', async (req, res) => {
     await fs.mkdir(customerDir, { recursive: true })
     const repoPath = path.join(customerDir, name)
     
-    await execAsync(`git clone ${clone_url} ${repoPath}`)
+    await execFileAsync('git', ['clone', clone_url, repoPath])
     
     const provisionScript = path.join(__dirname, 'provision.py')
-    const { stdout } = await execAsync(
-      `python3 ${provisionScript} ${name} ${repoPath} ${session.githubUser} ${clone_url} ${template}`
-    )
+    const { stdout } = await execFileAsync('python3', [
+      provisionScript,
+      name,
+      repoPath,
+      session.githubUser,
+      clone_url,
+      template,
+    ])
     const projectId = stdout.trim()
     
     res.json({ project_id: projectId, repo_path: repoPath, full_name })
@@ -210,7 +219,7 @@ app.get('/api/ledger/:projectId', async (req, res) => {
   
   try {
     const ledgerScript = path.join(__dirname, 'ledger.py')
-    const { stdout } = await execAsync(`python3 ${ledgerScript} ${projectId} ${limit}`)
+    const { stdout } = await execFileAsync('python3', [ledgerScript, projectId, String(limit)])
     res.json(JSON.parse(stdout))
   } catch (error: any) {
     res.status(500).json({ error: error.message })
@@ -230,7 +239,7 @@ app.patch('/api/tasks/:id/close', async (req, res) => {
   
   try {
     const closeScript = path.join(__dirname, 'close_task.py')
-    await execAsync(`python3 ${closeScript} ${id}`)
+    await execFileAsync('python3', [closeScript, id])
     res.json({ success: true })
   } catch (error: any) {
     res.status(500).json({ error: error.message })
