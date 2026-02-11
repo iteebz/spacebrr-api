@@ -84,11 +84,12 @@ def main():
     
     try:
         subprocess.Popen(
-            ["space", "@", "scout"],
+            ["python3", "-m", "space.main", "@", "scout"],
             cwd=repo_path,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
+            env={**os.environ, "PYTHONPATH": "/app"},
         )
     except (FileNotFoundError, OSError):
         pass
