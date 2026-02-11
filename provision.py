@@ -19,7 +19,7 @@ def write_space_md(repo_path: Path, template: str = "testing") -> None:
     space_md.write_text(templates.get_template(template))
 
 def install_hook(repo_path: Path) -> None:
-    hook_source = Path(__file__).parent / "space" / "ctx" / "hooks" / "commit-msg-saas"
+    hook_source = Path(__file__).parent / "scripts" / "hooks" / "commit-msg-saas"
     hook_dest = repo_path / ".git" / "hooks" / "commit-msg"
     
     if not hook_source.exists():
