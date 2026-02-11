@@ -208,6 +208,26 @@ app.get('/api/ledger/:projectId', async (req, res) => {
   }
 })
 
+app.patch('/api/tasks/:id/close', async (req, res) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  
+  const { id } = req.params
+  if (!/^[a-f0-9]{8}$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid task ID' })
+  }
+  
+  try {
+    const closeScript = path.join(__dirname, 'close_task.py')
+    await execAsync(`python3 ${closeScript} ${id}`)
+    res.json({ success: true })
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.get('/select', (req, res) => {
   res.sendFile(path.join(__dirname, 'select.html'))
 })
