@@ -116,7 +116,6 @@ def fetch(include_archived: bool = False) -> list[Project]:
 
 
 def batch_last_active(project_ids: list[ProjectId]) -> dict[ProjectId, str | None]:
-    """Return latest activity timestamp per project based on primitives."""
     if not project_ids:
         return {}
     ph = ",".join("?" * len(project_ids))
@@ -137,7 +136,6 @@ def batch_last_active(project_ids: list[ProjectId]) -> dict[ProjectId, str | Non
 
 
 def batch_artifact_counts(project_ids: list[ProjectId]) -> dict[ProjectId, int]:
-    """Return total artifact count (insights + decisions + tasks) per project."""
     if not project_ids:
         return {}
     ph = ",".join("?" * len(project_ids))
@@ -310,7 +308,6 @@ def fetch_by_tag(tag: str, include_archived: bool = True) -> list[Project]:
 
 
 def find_git_root(start: Path | None = None) -> Path | None:
-    """Walk up from start looking for .git (file or directory). Stops at $HOME."""
     cwd = (start or Path.cwd()).resolve()
     home = Path.home().resolve()
 
@@ -323,7 +320,6 @@ def find_git_root(start: Path | None = None) -> Path | None:
 
 
 def find_by_path(git_root: Path) -> Project | None:
-    """Match git root against known project repo_paths."""
     resolved = git_root.resolve()
     for project in fetch():
         if project.repo_path and Path(project.repo_path).resolve() == resolved:
@@ -332,7 +328,6 @@ def find_by_path(git_root: Path) -> Project | None:
 
 
 def infer_from_cwd() -> Project | None:
-    """Infer project from CWD by finding git root and matching to known"""
     start_path = (
         Path(os.environ["SPACE_INVOCATION_DIR"]) if "SPACE_INVOCATION_DIR" in os.environ else None
     )
@@ -342,7 +337,6 @@ def infer_from_cwd() -> Project | None:
 
 
 def ensure_global() -> Project:
-    """Get or create the _global project for cross-project work."""
     with store.ensure() as conn:
         row = conn.execute(
             "SELECT * FROM projects WHERE id = ? LIMIT 1",
@@ -377,7 +371,6 @@ def ensure_global() -> Project:
 
 
 def get_scope(project_ref: str | None = None) -> ProjectId:
-    """Get project scope from: explicit ref -> request -> CWD -> _global."""
     if project_ref:
         project = store.resolve(project_ref, "projects", Project)
         return project.id
@@ -392,16 +385,10 @@ def get_scope(project_ref: str | None = None) -> ProjectId:
 
 
 def require_scope() -> ProjectId:
-    """Get project scope (always succeeds - defaults to _global)."""
     return get_scope()
 
 
 def last_touched_at(project_id: ProjectId) -> str | None:
-    """Get most recent activity timestamp from human agents for a project.
-
-    Checks insights, decisions, tasks, and replies created by humans.
-    Returns ISO timestamp or None if no human activity exists.
-    """
     with store.ensure() as conn:
         row = conn.execute(
             """

@@ -14,7 +14,6 @@ MENTION_PATTERN = re.compile(r"(?<!\w)@(\w+)")
 
 
 def _known_identities() -> set[str]:
-    """Fetch known agent handles via SQL."""
     with store.ensure() as conn:
         rows = conn.execute("SELECT handle FROM agents WHERE deleted_at IS NULL").fetchall()
     return {r["handle"] for r in rows} | {"human"}
@@ -29,7 +28,6 @@ def parse_mentions(content: str, validate: bool = True) -> list[str]:
 
 
 def validate_mentions(content: str) -> tuple[list[str], list[str]]:
-    """Return (valid, invalid) mentions from content."""
     raw = MENTION_PATTERN.findall(content)
     known = _known_identities()
     valid = [m for m in raw if m in known]
@@ -58,7 +56,6 @@ def create_by_ref(
     content: str,
     spawn_id: SpawnId | None = None,
 ) -> Reply:
-    """Create a reply using a reference like 'i/abcd1234'."""
     if "/" not in ref:
         raise ValidationError(f"Invalid reference format: {ref} (expected prefix/id)")
 
@@ -195,7 +192,6 @@ class ThreadState:
 
 
 def thread_state(parent_type: ArtifactType, parent_id: str) -> ThreadState:
-    """Compute thread state with SQL for author types."""
     with store.ensure() as conn:
         rows = conn.execute(
             """

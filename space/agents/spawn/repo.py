@@ -62,7 +62,6 @@ def get_or_create(
     caller_spawn_id: SpawnId | None = None,
     mode: SpawnMode = SpawnMode.SOVEREIGN,
 ) -> tuple[Spawn, bool]:
-    """Get existing active spawn or create new one. One active spawn per agent globally."""
     spawn_id = SpawnId(ids.generate("spawns"))
     now = datetime.now(UTC).isoformat()
 
@@ -185,7 +184,6 @@ def update(
 
 
 def set_pid_atomic(spawn_id: SpawnId, pid: int) -> bool:
-    """Atomically set PID if not already set. Returns True if successful, False if PID already set."""
     with store.write() as conn:
         cursor = conn.execute(
             "UPDATE spawns SET pid = ? WHERE id = ? AND pid IS NULL",
@@ -195,7 +193,6 @@ def set_pid_atomic(spawn_id: SpawnId, pid: int) -> bool:
 
 
 def touch(spawn_id: SpawnId) -> Spawn:
-    """Update last_active_at timestamp. Called on tool use events."""
     now = datetime.now(UTC).isoformat()
     with store.write() as conn:
         conn.execute(
@@ -301,7 +298,6 @@ INERTIA_PATTERNS = (
 
 
 def clear_inertia_summaries() -> int:
-    """Clear spawn summaries that contain inertia patterns."""
     conditions = " OR ".join("summary LIKE ?" for _ in INERTIA_PATTERNS)
     with store.write() as conn:
         cursor = conn.execute(
@@ -312,7 +308,6 @@ def clear_inertia_summaries() -> int:
 
 
 def increment_resume_count(spawn_id: SpawnId) -> int:
-    """Increment and return resume_count. Called on crash recovery."""
     with store.write() as conn:
         conn.execute(
             "UPDATE spawns SET resume_count = COALESCE(resume_count, 0) + 1 WHERE id = ?",

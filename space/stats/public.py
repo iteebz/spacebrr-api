@@ -13,7 +13,6 @@ from .swarm import absence_metrics
 
 
 def _git_commits_since(repo: Path, since: str) -> int:
-    """Count commits since date."""
     git_path = shutil.which("git")
     if not git_path:
         return 0
@@ -33,7 +32,6 @@ def _git_commits_since(repo: Path, since: str) -> int:
 
 
 def _code_lines(repo: Path) -> int:
-    """Count Python lines in space module."""
     space_dir = repo / "space"
     if not space_dir.exists():
         return 0
@@ -46,7 +44,6 @@ def _code_lines(repo: Path) -> int:
 
 
 def _test_lines(repo: Path) -> int:
-    """Count test lines."""
     tests_dir = repo / "tests"
     if not tests_dir.exists():
         return 0
@@ -59,7 +56,6 @@ def _test_lines(repo: Path) -> int:
 
 
 def _findings_count(stats_path: str | None) -> int:
-    """Count research findings from website repo."""
     if not stats_path:
         return 0
     website_root = Path(stats_path).expanduser().parent.parent
@@ -70,7 +66,6 @@ def _findings_count(stats_path: str | None) -> int:
 
 
 def get() -> dict[str, Any]:
-    """Minimal public stats. No sensitive data."""
     with store.ensure() as conn:
         spawns_24h = conn.execute(
             "SELECT COUNT(*) FROM spawns WHERE created_at > datetime('now', '-24 hours')"
@@ -141,7 +136,6 @@ def get() -> dict[str, Any]:
 
 
 def write(path: str | None = None) -> str:
-    """Write public stats to JSON file for website consumption."""
     if path is None:
         cfg = config.load()
         path = cfg.stats_json_path

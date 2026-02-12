@@ -28,7 +28,6 @@ def clear_process(spawn_id: SpawnId) -> None:
 
 
 def set_pid(spawn_id: SpawnId, pid: int, proc: subprocess.Popen[Any] | None = None) -> bool:
-    """Set PID atomically. Returns True if successful, False if another process already set it."""
     success = repo.set_pid_atomic(spawn_id, pid)
     if success and proc:
         with _process_lock:
@@ -47,7 +46,6 @@ def set_pid(spawn_id: SpawnId, pid: int, proc: subprocess.Popen[Any] | None = No
 
 
 def _pid_alive(pid: int | None) -> bool:
-    """Check if PID exists and is alive."""
     if not pid:
         return False
     try:
@@ -58,7 +56,6 @@ def _pid_alive(pid: int | None) -> bool:
 
 
 def terminate(spawn_id: SpawnId) -> Spawn:
-    """Terminate spawn: kill process if alive, mark DONE. Idempotent."""
     s = repo.get(spawn_id)
     if s.status == SpawnStatus.DONE:
         return s
@@ -67,7 +64,6 @@ def terminate(spawn_id: SpawnId) -> Spawn:
 
 
 def _kill_if_alive(spawn_id: SpawnId, pid: int | None) -> bool:
-    """Kill process if alive. Returns True if killed, False if already dead."""
     with _process_lock:
         proc = _active_processes.pop(spawn_id, None)
 
@@ -181,12 +177,6 @@ def _autofill_summary(spawn_id: str) -> None:
 
 
 def reconcile() -> tuple[int, int]:
-    """Reconcile DB status with process reality.
-
-    Returns (killed, marked_dead) counts:
-    - killed: spawns with terminal status but live PID that were killed
-    - marked_dead: spawns with running status but dead PID that were marked failed
-    """
     killed = 0
     marked_dead = reap()
 
@@ -207,7 +197,6 @@ def reconcile() -> tuple[int, int]:
 
 
 def stop(agent_id: AgentId) -> Spawn | None:
-    """Stop active spawn for agent."""
     spawns = repo.fetch(agent_id=agent_id, status=SpawnStatus.ACTIVE, limit=1)
     if not spawns:
         return None
@@ -215,7 +204,6 @@ def stop(agent_id: AgentId) -> Spawn | None:
 
 
 def get_checklist(spawn: Spawn) -> dict[str, Any]:
-    """Pre-exit checklist: tasks owned, summary state."""
     all_tasks = tasks.fetch(assignee_id=spawn.agent_id)
     owned_tasks = [t for t in all_tasks if t.status == TaskStatus.ACTIVE]
 
@@ -231,7 +219,6 @@ MIN_SUMMARY_LENGTH = 10
 
 
 def done(spawn: Spawn, summary: str) -> dict[str, Any]:
-    """Mark spawn complete with summary. Spawn is self-sovereign."""
     summary = summary.strip()
     if len(summary) < MIN_SUMMARY_LENGTH:
         return {

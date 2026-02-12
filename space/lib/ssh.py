@@ -13,7 +13,6 @@ _DEFAULT_KEY_NAME = "space"
 
 @space_cmd("ssh")
 def main() -> None:
-    """Remote shell access."""
     parser = argparse.ArgumentParser(prog="ssh", description="Remote shell access")
     subs = parser.add_subparsers(dest="cmd")
 

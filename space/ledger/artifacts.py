@@ -6,10 +6,6 @@ from space.lib import store
 
 
 def resolve(parent_id: str) -> tuple[ArtifactType, str]:
-    """Resolve an artifact by full id or prefix.
-
-    Returns (artifact_type, full_id). Only resolves non-deleted artifacts.
-    """
     with store.ensure() as conn:
         for table, ptype in (("insights", "insight"), ("decisions", "decision"), ("tasks", "task")):
             row = conn.execute(
@@ -22,7 +18,6 @@ def resolve(parent_id: str) -> tuple[ArtifactType, str]:
 
 
 def get_project_id(parent_type: ArtifactType, parent_id: str) -> ProjectId | None:
-    """Return project_id for given artifact."""
     table = f"{parent_type}s"
     with store.ensure() as conn:
         row = conn.execute(
@@ -33,7 +28,6 @@ def get_project_id(parent_type: ArtifactType, parent_id: str) -> ProjectId | Non
 
 
 def is_closed(parent_type: ArtifactType, parent_id: str) -> bool:
-    """Return True if an artifact should be treated as closed for inbox/triage views."""
     with store.ensure() as conn:
         if parent_type == "task":
             row = conn.execute("SELECT status FROM tasks WHERE id = ?", (parent_id,)).fetchone()
@@ -50,7 +44,6 @@ def is_closed(parent_type: ArtifactType, parent_id: str) -> bool:
 
 
 def soft_delete(table: str, id: str, typename: str) -> None:
-    """Soft delete a ledger primitive by setting deleted_at timestamp."""
     now = datetime.now(UTC).isoformat()
     with store.write() as conn:
         cursor = conn.execute(
@@ -62,7 +55,6 @@ def soft_delete(table: str, id: str, typename: str) -> None:
 
 
 def archive(table: str, id: str, typename: str) -> None:
-    """Archive a ledger primitive by setting archived_at timestamp."""
     now = datetime.now(UTC).isoformat()
     with store.write() as conn:
         cursor = conn.execute(

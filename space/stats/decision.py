@@ -4,7 +4,6 @@ from space.lib import store
 
 
 def flow() -> dict[str, int]:
-    """Decision status breakdown."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -107,7 +106,6 @@ def reversal_rate() -> dict[str, Any]:
 
 
 def half_life() -> dict[str, Any]:
-    """Median time from committed to actioned. Decision velocity."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -138,7 +136,6 @@ def half_life() -> dict[str, Any]:
 
 
 def influence() -> dict[str, Any]:
-    """Measure which decisions get referenced (via citations table + FK links)."""
     with store.ensure() as conn:
         total_decisions = conn.execute(
             "SELECT COUNT(*) FROM decisions WHERE deleted_at IS NULL"
@@ -186,7 +183,6 @@ def influence() -> dict[str, Any]:
 
 
 def precision() -> dict[str, Any]:
-    """Measure decision acceptance rate by agent."""
     with store.ensure() as conn:
         rows = conn.execute(
             """

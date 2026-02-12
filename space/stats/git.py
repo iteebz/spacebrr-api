@@ -7,14 +7,12 @@ from space import agents
 
 
 def _extract_domain(msg: str) -> str | None:
-    """Extract scope from conventional commit (e.g., 'fix(cli): ...' -> 'cli')."""
     if "(" in msg and ")" in msg:
         return msg[msg.index("(") + 1 : msg.index(")")]
     return None
 
 
 def code_extension() -> dict[str, Any]:
-    """Track which agents extend other agents' code."""
     ai_agents = {a.handle for a in agents.fetch(type="ai")}
 
     def get_file_authors(filepath: str, n_commits: int = 100) -> list[str]:
@@ -63,7 +61,6 @@ def code_extension() -> dict[str, Any]:
 
 
 def cross_agent_corrections(days: int = 7) -> dict[str, Any]:
-    """Track when agent fixes another agent's work. Adversarial oversight signal."""
     ai_agents = {a.handle for a in agents.fetch(type="ai")}
 
     try:
@@ -130,7 +127,6 @@ def cross_agent_corrections(days: int = 7) -> dict[str, Any]:
 
 
 def agent_commit_stats(days: int = 7) -> dict[str, Any]:
-    """Per-agent commit volume, lines added/removed, net contribution."""
     ai_agents = {a.handle for a in agents.fetch(type="ai")}
 
     try:
@@ -195,7 +191,6 @@ def agent_commit_stats(days: int = 7) -> dict[str, Any]:
 
 
 def commit_stability(days: int = 7) -> dict[str, Any]:
-    """Measure code stability by tracking fix commit rate per agent."""
     try:
         result = subprocess.run(
             ["git", "log", f"--since={days} days ago", "--format=%H|%an|%s|%ai"],

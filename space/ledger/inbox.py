@@ -19,7 +19,6 @@ class InboxItem:
 
 
 def fetch(agent_handle: str, project_id: ProjectId | None = None) -> list[InboxItem]:
-    """Unified inbox: all artifacts requiring agent attention."""
     with store.ensure() as conn:
         agent_row = conn.execute(
             "SELECT id FROM agents WHERE handle = ? AND deleted_at IS NULL",
@@ -318,7 +317,6 @@ def fetch(agent_handle: str, project_id: ProjectId | None = None) -> list[InboxI
 
 
 def fetch_replies(agent_handle: str) -> list[Reply]:
-    """Legacy: reply mentions only."""
     items = fetch(agent_handle)
     reply_ids = [item.id for item in items if item.type == "reply"]
     if not reply_ids:
@@ -333,7 +331,6 @@ def fetch_replies(agent_handle: str) -> list[Reply]:
 
 
 def fetch_insights(agent_handle: str) -> list[Insight]:
-    """Legacy: insight mentions and open questions."""
     items = fetch(agent_handle)
     insight_ids = [item.id for item in items if item.type == "insight"]
     if not insight_ids:
@@ -348,7 +345,6 @@ def fetch_insights(agent_handle: str) -> list[Insight]:
 
 
 def fetch_decisions(agent_handle: str) -> list[Decision]:
-    """Open decisions with discussion agent hasn't joined."""
     items = fetch(agent_handle)
     decision_ids = [item.id for item in items if item.type == "decision"]
     if not decision_ids:
@@ -363,7 +359,6 @@ def fetch_decisions(agent_handle: str) -> list[Decision]:
 
 
 def fetch_tasks(agent_handle: str) -> list[Task]:
-    """Tasks assigned to agent."""
     items = fetch(agent_handle)
     task_ids = [item.id for item in items if item.type == "task"]
     if not task_ids:
@@ -378,7 +373,6 @@ def fetch_tasks(agent_handle: str) -> list[Task]:
 
 
 def agents_with_inbox() -> set[str]:
-    """Agent handles with non-empty inboxes."""
     with store.ensure() as conn:
         rows = conn.execute("SELECT handle FROM agents WHERE deleted_at IS NULL").fetchall()
     handles = {row["handle"] for row in rows}
@@ -391,7 +385,6 @@ def mark_read(
     agent_id: AgentId,
     spawn_id: SpawnId | None = None,
 ) -> None:
-    """Record artifact read. Clears from inbox without creating reply artifact."""
     now = datetime.now(UTC).isoformat()
     with store.write() as conn:
         conn.execute(
@@ -406,7 +399,6 @@ def mark_read(
 
 
 def mark_resolved(artifact_type: ArtifactType, artifact_id: str, agent_id: AgentId) -> None:
-    """Mark artifact as resolved by human."""
     now = datetime.now(UTC).isoformat()
     with store.write() as conn:
         conn.execute(
@@ -421,7 +413,6 @@ def mark_resolved(artifact_type: ArtifactType, artifact_id: str, agent_id: Agent
 
 
 def is_resolved(artifact_type: ArtifactType, artifact_id: str) -> bool:
-    """Check if artifact has been resolved by human."""
     with store.ensure() as conn:
         row = conn.execute(
             "SELECT 1 FROM human_resolutions WHERE artifact_type = ? AND artifact_id = ?",
@@ -431,7 +422,6 @@ def is_resolved(artifact_type: ArtifactType, artifact_id: str) -> bool:
 
 
 def get_resolved_at(artifact_type: ArtifactType, artifact_id: str) -> str | None:
-    """Get timestamp when artifact was resolved, or None if not resolved."""
     with store.ensure() as conn:
         row = conn.execute(
             "SELECT resolved_at FROM human_resolutions WHERE artifact_type = ? AND artifact_id = ?",
@@ -441,7 +431,6 @@ def get_resolved_at(artifact_type: ArtifactType, artifact_id: str) -> str | None
 
 
 def unresolve(artifact_type: ArtifactType, artifact_id: str) -> None:
-    """Remove resolution marker (undo)."""
     with store.write() as conn:
         conn.execute(
             "DELETE FROM human_resolutions WHERE artifact_type = ? AND artifact_id = ?",

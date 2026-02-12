@@ -23,11 +23,6 @@ _last_checkpoint: dict[str, float] = {}
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
-    """Connect to SQLite with write contention monitoring.
-
-    Uses WAL mode + 5s timeout for concurrent writes.
-    SQLite write ceiling: ~1000 writes/sec on SSD.
-    """
     start = time.perf_counter()
 
     conn = sqlite3.connect(db_path, check_same_thread=False, timeout=5.0, factory=SpaceConnection)
@@ -45,11 +40,6 @@ def connect(db_path: Path) -> sqlite3.Connection:
 
 
 def connect_readonly(db_path: Path) -> sqlite3.Connection:
-    """Connect to SQLite in read-only mode without mutating DB files.
-
-    Uses SQLite URI mode=ro to prevent implicit database creation and to avoid
-    PRAGMAs that may write (e.g. journal_mode changes).
-    """
     start = time.perf_counter()
 
     conn = sqlite3.connect(
@@ -68,11 +58,6 @@ def connect_readonly(db_path: Path) -> sqlite3.Connection:
 
 
 def checkpoint_wal(db_dir: Path) -> None:
-    """Merge WAL data into main DB files for backup/transfer.
-
-    Args:
-        db_dir: Directory containing *.db files
-    """
     for db_file in sorted(db_dir.glob("*.db")):
         try:
             conn = connect(db_file)
@@ -84,7 +69,6 @@ def checkpoint_wal(db_dir: Path) -> None:
 
 
 def maybe_checkpoint(conn: sqlite3.Connection) -> None:
-    """Periodically checkpoint WAL to keep it from growing unbounded."""
     row = conn.execute("PRAGMA database_list").fetchone()
     if not row or not row[2]:
         return
@@ -105,17 +89,14 @@ def maybe_checkpoint(conn: sqlite3.Connection) -> None:
 
 
 def placeholders(items: Sized) -> str:
-    """Generate SQL placeholder string for IN clauses."""
     return ",".join("?" * len(items))
 
 
 def fts_tokenize(text: str) -> list[str]:
-    """Extract searchable tokens from text."""
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
 def fts_query_string(terms: list[str]) -> str:
-    """Build FTS MATCH query from tokens."""
     return " OR ".join(f"{term}*" for term in terms)
 
 
@@ -125,14 +106,6 @@ def fts_search(
     fts_executor: Callable[[sqlite3.Connection, str], list[T]],
     fallback_executor: Callable[[sqlite3.Connection, str], list[T]],
 ) -> list[T]:
-    """Execute FTS search with automatic fallback on SQLite errors.
-
-    Args:
-        conn: Database connection
-        query: Raw search query from user
-        fts_executor: Function that runs FTS query, receives (conn, fts_match_string)
-        fallback_executor: Function that runs LIKE fallback, receives (conn, original_query)
-    """
     terms = fts_tokenize(query)
     if not terms:
         return fallback_executor(conn, query)

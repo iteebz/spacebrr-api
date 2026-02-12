@@ -39,8 +39,6 @@ class EventsPage:
 
 @dataclass
 class SpawnContext:
-    """Resolved spawn context: agent, provider, events file."""
-
     spawn: Spawn
     agent: Agent
     provider: ProviderName | None
@@ -48,7 +46,6 @@ class SpawnContext:
 
 
 def spawn_duration(spawn: Spawn) -> float | None:
-    """Calculate spawn duration in seconds from timestamps."""
     if not spawn.created_at or not spawn.last_active_at:
         return None
     start = datetime.fromisoformat(spawn.created_at)
@@ -221,7 +218,6 @@ AUTO_SUMMARY_MAX_LENGTH = 200
 
 
 def has_work_events(spawn_id: str) -> bool:
-    """Check if spawn has tool_use/assistant events (not just init)."""
     s = get(SpawnId(spawn_id))
     ctx = _resolve_context(s)
     if not ctx.events_file or not ctx.provider:
@@ -253,7 +249,6 @@ def extract_last_response(spawn_id: str) -> str | None:
 
 
 def extract_last_cwd(spawn_id: str) -> str | None:
-    """Best-effort: infer most recent cwd from `cd` commands in Bash tool calls."""
     s = get(SpawnId(spawn_id))
     ctx = _resolve_context(s)
     if not ctx.events_file or not ctx.provider:
@@ -449,7 +444,6 @@ async def stream_live(
 
 
 async def stream_all_active(*, poll_interval: float = 2.0) -> AsyncGenerator[dict[str, Any], None]:
-    """Stream events from all active spawns, auto-attaching to new ones."""
     tracked: dict[str, tuple[asyncio.Task[None], asyncio.Queue[dict[str, Any]]]] = {}
     merge_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
     spawn_cwd: dict[str, str] = {}

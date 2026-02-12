@@ -57,16 +57,11 @@ ALWAYS_DISALLOWED: dict[str, list[str]] = {
 
 
 def all_provider_tools(provider: str) -> set[str]:
-    """Get all tool names for a provider."""
     mapping = PROVIDER_TOOLS.get(provider, {})
     return {tool for tools in mapping.values() for tool in tools}
 
 
 def disallowed_for(provider: str, allowed: set[Tool] | None = None) -> list[str]:
-    """Compute provider-specific deny list from allowed capabilities.
-
-    If allowed is None, returns only the always-disallowed tools.
-    """
     base_disallowed = set(ALWAYS_DISALLOWED.get(provider, []))
 
     if allowed is None:
@@ -80,10 +75,6 @@ def disallowed_for(provider: str, allowed: set[Tool] | None = None) -> list[str]
 
 
 def allowed_for(provider: str, allowed: set[Tool] | None = None) -> list[str]:
-    """Compute provider-specific allow list from capabilities.
-
-    Used for providers that support --allowed-tools (gemini).
-    """
     if allowed is None:
         mapping = PROVIDER_TOOLS.get(provider, {})
         return sorted({t for tools in mapping.values() for t in tools})
@@ -93,7 +84,6 @@ def allowed_for(provider: str, allowed: set[Tool] | None = None) -> list[str]:
 
 
 def parse_tools(tools_list: list[str] | None) -> set[Tool] | None:
-    """Parse tool strings from constitution frontmatter."""
     if tools_list is None:
         return None
     result = set()
@@ -115,10 +105,6 @@ def _provider_tool_to_capability(provider: str) -> dict[str, Tool]:
 
 
 def tool_name_map(provider: str, canonical_provider: str = "claude") -> dict[str, str]:
-    """Map provider tool names to canonical provider tool names.
-
-    Used to normalize tool_call/tool_result events across providers.
-    """
     if provider == canonical_provider:
         return {}
 
@@ -136,7 +122,6 @@ def tool_name_map(provider: str, canonical_provider: str = "claude") -> dict[str
 def normalize_tool_name(
     provider: str, tool_name: str, *, canonical_provider: str = "claude"
 ) -> str:
-    """Normalize a provider tool name to a canonical provider's tool name."""
     return tool_name_map(provider, canonical_provider).get(tool_name, tool_name)
 
 
@@ -156,7 +141,6 @@ def _mapping_payload(*, provider: str | None = None) -> dict[str, Any]:
 
 @space_cmd("tools")
 def main() -> None:
-    """Manage provider tool mappings."""
     parser = argparse.ArgumentParser(prog="tools", description="Manage provider tool mappings")
     subs = parser.add_subparsers(dest="cmd")
 

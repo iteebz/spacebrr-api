@@ -11,7 +11,6 @@ from space.lib import citations, store
 
 
 def _check_duplicate(content: str, project_id: ProjectId) -> DecisionId | None:
-    """Return existing decision ID if exact duplicate exists, else None."""
     with store.ensure() as conn:
         row = conn.execute(
             "SELECT id FROM decisions WHERE content = ? AND project_id = ? AND deleted_at IS NULL",
@@ -94,7 +93,6 @@ def fetch(
 
 
 def delete(decision_id: DecisionId) -> None:
-    """Soft delete. No hard deletes on decisions - provenance is sacred."""
     artifacts.soft_delete("decisions", decision_id, "Decision")
 
 
@@ -110,7 +108,6 @@ def reassign(decision_id: DecisionId, project_id: ProjectId) -> Decision:
 
 
 def archive(decision_id: DecisionId) -> Decision:
-    """Archive a decision. Removes from active view but preserves history."""
     artifacts.archive("decisions", decision_id, "Decision")
     return get(decision_id)
 
@@ -120,7 +117,6 @@ def action(
     at: str | None = None,
     outcome: str | None = None,
 ) -> Decision:
-    """Mark decision as actioned (reality contact). One-shot, immutable."""
     decision = get(decision_id)
     if decision.actioned_at:
         raise ValidationError(
@@ -145,15 +141,6 @@ def fetch_by_status(
     project_id: ProjectId | None = None,
     limit: int | None = None,
 ) -> list[Decision]:
-    """Fetch decisions by derived status: proposed, committed, actioned, learned, rejected.
-
-    Status is derived from timestamps + linked insights:
-    - proposed: not committed
-    - committed: committed but not actioned
-    - actioned: actioned with no insights created after actioned_at
-    - learned: actioned with at least one insight created after actioned_at
-    - rejected: rejected_at is set
-    """
     if not isinstance(status, DecisionStatus):
         try:
             status = DecisionStatus(status)
@@ -206,10 +193,6 @@ def fetch_by_status(
 
 
 def get_status(decision: Decision, linked_insights: list[Insight]) -> DecisionStatus:
-    """Derive status from timestamps and linked insights.
-
-    Caller must provide linked_insights — no hidden I/O.
-    """
     if decision.rejected_at:
         return DecisionStatus.REJECTED
 
@@ -224,14 +207,12 @@ def get_status(decision: Decision, linked_insights: list[Insight]) -> DecisionSt
 
 
 def is_human_blocked(decision: Decision) -> bool:
-    """Check if decision requires @human action (committed but content mentions @human)."""
     if not decision.committed_at or decision.actioned_at or decision.rejected_at:
         return False
     return agents.at_human(decision.content)
 
 
 def set_reversible(decision_id: DecisionId, reversible: bool) -> Decision:
-    """Mark whether a decision is reversible. Affects delegation threshold."""
     decision = get(decision_id)
     if decision.actioned_at:
         raise ValidationError(
@@ -250,7 +231,6 @@ def set_reversible(decision_id: DecisionId, reversible: bool) -> Decision:
 
 
 def commit(decision_id: DecisionId, at: str | None = None) -> Decision:
-    """Commit a proposed decision. Makes it binding. One-shot, immutable."""
     decision = get(decision_id)
     if decision.committed_at:
         raise ValidationError(
@@ -269,7 +249,6 @@ def commit(decision_id: DecisionId, at: str | None = None) -> Decision:
 
 
 def reject(decision_id: DecisionId, at: str | None = None) -> Decision:
-    """Reject decision (explicitly not pursuing). One-shot, immutable."""
     decision = get(decision_id)
     if decision.rejected_at:
         raise ValidationError(
@@ -288,7 +267,6 @@ def reject(decision_id: DecisionId, at: str | None = None) -> Decision:
 
 
 def uncommit(decision_id: DecisionId) -> Decision:
-    """Revert COMMITTED decision to PROPOSED. Used for decay mechanisms."""
     decision = get(decision_id)
     if not decision.committed_at:
         raise ValidationError(f"Decision '{decision_id}' not committed")
@@ -306,10 +284,6 @@ def uncommit(decision_id: DecisionId) -> Decision:
 
 
 def decay_human_blocked(hours: int = 48) -> list[DecisionId]:
-    """Decay COMMITTED decisions with @human blockers older than hours to PROPOSED.
-
-    Returns list of decision IDs that were decayed.
-    """
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -346,11 +320,6 @@ def fetch_stale(
     min_age_hours: int = 24,
     limit: int = 10,
 ) -> list[tuple[Decision, int]]:
-    """Fetch committed decisions with low reference counts (staleness candidates).
-
-    Returns list of (decision, ref_count) ordered by ref_count ascending.
-    A decision is stale if it's committed, has few references, and is old enough.
-    """
     with store.ensure() as conn:
         params: list[str | int] = [min_age_hours, max_refs]
 
@@ -392,10 +361,6 @@ def fetch_stale(
 def fetch_rejected_with_reasons(
     project_id: ProjectId | None = None, limit: int = 5, max_age_days: int = 30
 ) -> list[tuple[Decision, str | None]]:
-    """Fetch recently rejected decisions with their rejection reasons.
-
-    Returns list of (decision, reason) tuples. Reason extracted from reply.
-    """
     with store.ensure() as conn:
         params: list[str | int] = [max_age_days]
         query = """
@@ -432,7 +397,6 @@ def fetch_rejected_with_reasons(
 
 
 def fetch_calibration(project_id: ProjectId | None = None, limit: int = 50) -> list[Decision]:
-    """Fetch decisions with both reversibility judgment and outcome recorded."""
     with store.ensure() as conn:
         params: list[str | int] = []
         query = """

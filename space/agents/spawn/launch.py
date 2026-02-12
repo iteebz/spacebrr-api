@@ -53,7 +53,6 @@ def launch(
     skills: list[str] | None = None,
     write_starting_event: bool = False,
 ) -> Spawn:
-    """Launch agent spawn (always async, detached subprocess)."""
     agent = agents.get(agent_id)
     effective_agent = agent
     if model_override and model_override != agent.model:
@@ -100,7 +99,6 @@ def _resolve_spawn(
     caller_spawn_id: SpawnId | None,
     mode: SpawnMode = SpawnMode.SOVEREIGN,
 ) -> tuple[Spawn, bool, bool]:
-    """Resolve spawn: provided -> existing active -> new. Returns (spawn, is_resume, is_new)."""
     if s:
         if s.status == SpawnStatus.ACTIVE and s.pid:
             raise StateError(f"Spawn '{s.id}' is already running (pid {s.pid})")
@@ -130,7 +128,6 @@ def _launch_background(
     cwd: str,
     timeout_seconds: int,
 ) -> None:
-    """Fire subprocess and return immediately. Spawn is fully sovereign."""
     if not agent.model:
         raise StateError(f"Agent {agent.handle} has no model")
 
@@ -166,7 +163,6 @@ def _spawn_sovereign(
     agent: Agent,
     timeout_seconds: int,
 ) -> None:
-    """Launch fully detached subprocess. Stdout goes to file, not pipe."""
     if not agent.model:
         raise StateError(f"Agent {agent.handle} has no model")
     provider = providers.map(agent.model)
@@ -233,7 +229,6 @@ def _monitor_sovereign(
     stderr_file: Path,
     timeout_seconds: int,
 ) -> None:
-    """Poll process, tail events file for session capture. Process-independent."""
     import time  # noqa: PLC0415
 
     provider = providers.map(agent.model) if agent.model else "unknown"
@@ -283,7 +278,6 @@ def _monitor_sovereign(
 def _tail_events(
     events_file: Path, pos: int, spawn_id: str, session_id: str | None
 ) -> tuple[int, str | None]:
-    """Read new lines from events file, capture session_id."""
     import json as _json  # noqa: PLC0415
 
     from space.agents.spawn import run, trace  # noqa: PLC0415

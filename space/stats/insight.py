@@ -3,7 +3,6 @@ from space.lib import store
 
 
 def reference_rate(hours: int = 168) -> float:
-    """Percentage of insights that reference prior work (via citations table)."""
     with store.ensure() as conn:
         total = conn.execute(
             """
@@ -28,7 +27,6 @@ def reference_rate(hours: int = 168) -> float:
 
 
 def decision_insight_reference_rate(hours: int = 168) -> float:
-    """Percentage of decisions that cite insights (governance grounding)."""
     with store.ensure() as conn:
         total = conn.execute(
             """
@@ -54,7 +52,6 @@ def decision_insight_reference_rate(hours: int = 168) -> float:
 
 
 def provenance_stats(project_id: ProjectId | None = None) -> dict[str, int]:
-    """Count insights by provenance type."""
     with store.ensure() as conn:
         params: list[str] = []
         query = """
@@ -70,7 +67,6 @@ def provenance_stats(project_id: ProjectId | None = None) -> dict[str, int]:
 
 
 def counterfactual_stats(project_id: ProjectId | None = None) -> dict[str, int]:
-    """Count closed insights by counterfactual (could single agent have found this?)."""
     with store.ensure() as conn:
         params: list[str] = []
         query = """

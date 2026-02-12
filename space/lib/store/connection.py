@@ -104,7 +104,6 @@ def resolve_db_path() -> Path:
 
 
 def ensure() -> _ConnContext:
-    """Thread-local cached connection. Use store.transaction() for atomicity."""
     db_path = resolve_db_path()
     cache_key = str(db_path)
 
@@ -128,10 +127,6 @@ def ensure() -> _ConnContext:
 
 @contextmanager
 def existing() -> Generator[sqlite3.Connection, None, None]:
-    """Open a connection to an existing DB without running migrations.
-
-    Use this for diagnostics/health checks that must not mutate state.
-    """
     db_path = resolve_db_path()
     if not db_path.exists():
         raise FileNotFoundError(f"database does not exist: {db_path}")
@@ -168,14 +163,6 @@ def close_all() -> None:
 
 @contextmanager
 def transaction() -> Generator[sqlite3.Connection, None, None]:
-    """Execute multiple statements atomically.
-
-    Usage:
-        with store.transaction() as conn:
-            conn.execute("INSERT ...")
-            conn.execute("UPDATE ...")
-        # auto-commits on exit, rollbacks on exception
-    """
     with ensure() as conn:
         if _in_transaction(conn):
             if not hasattr(_local, "savepoint_seq"):
@@ -205,7 +192,6 @@ def transaction() -> Generator[sqlite3.Connection, None, None]:
 
 
 def set_test_db_path(db_dir: Path | None) -> None:
-    """Set database path override for test isolation."""
     _db_path_override.set(db_dir)
 
 
@@ -219,7 +205,6 @@ ARCHIVABLE_TABLES = {"agents", "projects", "decisions", "insights"}
 
 
 def unarchive(table: str, id: str, conn: sqlite3.Connection | None = None) -> bool:
-    """Unarchive entity if archived. Returns True if state changed."""
     if table not in ARCHIVABLE_TABLES:
         raise ValueError(f"Table '{table}' is not archivable")
 

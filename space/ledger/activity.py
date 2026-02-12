@@ -42,7 +42,6 @@ def fetch(
     since: str | None = None,
     limit: int = 100,
 ) -> list[Activity]:
-    """Fetch activity, optionally filtered."""
     with store.ensure() as conn:
         query = "SELECT * FROM activity WHERE 1=1"
         params: list[str | int] = []
@@ -76,10 +75,8 @@ def fetch(
 
 
 def for_primitive(primitive_id: str) -> list[Activity]:
-    """Get all activity for a specific primitive."""
     return fetch(primitive_id=primitive_id)
 
 
 def recent(limit: int = 50) -> list[Activity]:
-    """Get recent activity across all primitives."""
     return fetch(limit=limit)

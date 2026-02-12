@@ -7,7 +7,6 @@ from space.lib import store
 
 
 def artifacts_per_spawn(hours: int = 24) -> list[dict[str, Any]]:
-    """Calculate artifacts/spawn ratio per agent."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -30,7 +29,6 @@ def artifacts_per_spawn(hours: int = 24) -> list[dict[str, Any]]:
 
 
 def loop_frequency(hours: int = 24) -> dict[str, Any]:
-    """Count consecutive same-agent spawn."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -70,7 +68,6 @@ def loop_frequency(hours: int = 24) -> dict[str, Any]:
 
 
 def engagement(hours: int = 24) -> list[dict[str, Any]]:
-    """Reply/insight ratio per agent."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -98,7 +95,6 @@ def engagement(hours: int = 24) -> list[dict[str, Any]]:
 
 
 def compounding(hours: int = 168) -> dict[str, Any]:
-    """Measure strategic work citing prior strategic work."""
     with store.ensure() as conn:
         window_total = conn.execute(
             """
@@ -182,7 +178,6 @@ def compounding(hours: int = 168) -> dict[str, Any]:
 
 
 def task_sovereignty(hours: int = 168) -> dict[str, Any]:
-    """Measure self-originated vs assigned tasks per agent."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -234,7 +229,6 @@ def task_sovereignty(hours: int = 168) -> dict[str, Any]:
 
 
 def knowledge_decay(weeks: int = 12) -> dict[str, Any]:
-    """Citation frequency by insight age bucket. Steep decay = swarm forgetting."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -261,7 +255,6 @@ def knowledge_decay(weeks: int = 12) -> dict[str, Any]:
 
 
 def project_distribution(hours: int = 24) -> dict[str, Any]:
-    """Spawns over time window."""
     with store.ensure() as conn:
         total = conn.execute(
             """
@@ -282,7 +275,6 @@ def project_distribution(hours: int = 24) -> dict[str, Any]:
 
 
 def status(hours: int = 24) -> dict[str, Any]:
-    """Human-readable swarm status for overnight review."""
     with store.ensure() as conn:
         spawn_count = conn.execute(
             "SELECT COUNT(*) FROM spawns WHERE created_at > datetime('now', ? || ' hours')",
@@ -358,7 +350,6 @@ def status(hours: int = 24) -> dict[str, Any]:
 
 
 def absence_metrics(hours: int = 168) -> dict[str, Any]:
-    """Measure @human absence: how long swarm operates without intervention."""
     with store.ensure() as conn:
         human_ids = [
             r[0]
@@ -480,7 +471,6 @@ def absence_metrics(hours: int = 168) -> dict[str, Any]:
 
 
 def silent_agents(hours: int = 24) -> list[dict[str, Any]]:
-    """Find AI agents with no recent activity."""
     result = agents.metrics.silent_agents(hours)
     return [
         {"handle": s.handle, "last_activity": s.last_activity, "hours_silent": s.hours_silent}
@@ -489,12 +479,10 @@ def silent_agents(hours: int = 24) -> list[dict[str, Any]]:
 
 
 def open_questions() -> int:
-    """Count open insights (questions)."""
     return insights.open_count()
 
 
 def spawn_stats(limit: int = 10) -> list[dict[str, Any]]:
-    """Per-spawn productivity stats. Enables self-diagnosis of idle loops."""
     with store.ensure() as conn:
         rows = conn.execute(
             """

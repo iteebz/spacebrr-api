@@ -15,7 +15,6 @@ MAX_CONTENT_LENGTH = 280
 
 
 def _compute_provenance(content: str, author_id: AgentId) -> str:
-    """Compute insight provenance based on cross-agent citations."""
     cited = citations.extract(content)
     if not cited:
         return "solo"
@@ -43,7 +42,6 @@ def validate_domain(domain: str) -> str:
 
 
 def _check_duplicate(content: str, project_id: ProjectId) -> InsightId | None:
-    """Return existing insight ID if exact duplicate exists, else None."""
     with store.ensure() as conn:
         row = conn.execute(
             "SELECT id FROM insights WHERE content = ? AND project_id = ? AND deleted_at IS NULL",
@@ -191,7 +189,6 @@ def delete(insight_id: InsightId) -> None:
 
 
 def validated_decision_ids(decision_ids: list[DecisionId]) -> set[DecisionId]:
-    """Return subset of decision_ids that have at least one linked insight."""
     if not decision_ids:
         return set()
     placeholders = ",".join("?" * len(decision_ids))
@@ -204,7 +201,6 @@ def validated_decision_ids(decision_ids: list[DecisionId]) -> set[DecisionId]:
 
 
 def fetch_by_decision_ids(decision_ids: list[DecisionId]) -> dict[DecisionId, list[Insight]]:
-    """Batch fetch insights grouped by decision_id."""
     if not decision_ids:
         return {}
     placeholders = ",".join("?" * len(decision_ids))
@@ -230,13 +226,11 @@ def count(include_archived: bool = False, project_id: ProjectId | None = None) -
 
 
 def open_count() -> int:
-    """Count open insights (unresolved questions)."""
     with store.ensure() as conn:
         return store.q("insights").active().where("open = 1").count(conn)
 
 
 def fetch_open(project_id: ProjectId | None = None, limit: int | None = None) -> list[Insight]:
-    """Fetch open insights (unresolved questions)."""
     with store.ensure() as conn:
         return (
             store.q("insights")
@@ -250,7 +244,6 @@ def fetch_open(project_id: ProjectId | None = None, limit: int | None = None) ->
 
 
 def fetch_closed(project_id: ProjectId | None = None, limit: int | None = None) -> list[Insight]:
-    """Fetch closed insights (resolved questions) via activity log."""
     with store.ensure() as conn:
         params: list[str | int] = []
         query = """
@@ -274,7 +267,6 @@ def fetch_closed(project_id: ProjectId | None = None, limit: int | None = None) 
 
 
 def close(insight_id: InsightId, counterfactual: bool | None = None) -> Insight:
-    """Close an open insight. Optionally record counterfactual (could single agent have found this?)."""
     with store.write() as conn:
         if counterfactual is not None:
             cursor = conn.execute(
@@ -292,7 +284,6 @@ def close(insight_id: InsightId, counterfactual: bool | None = None) -> Insight:
 
 
 def agents_with_inbox(project_id: ProjectId | None = None) -> set[str]:
-    """Return handles of agents with unresolved inbox items (single query)."""
     with store.ensure() as conn:
         if project_id:
             rows = conn.execute(
@@ -364,7 +355,6 @@ def agents_with_inbox(project_id: ProjectId | None = None) -> set[str]:
 
 
 def has_unprocessed_stream() -> bool:
-    """Check if there are unprocessed stream insights."""
     with store.ensure() as conn:
         count = conn.execute(
             """
@@ -388,7 +378,6 @@ def fetch_domain_questions(
     project_id: ProjectId | None = None,
     limit: int = 3,
 ) -> list[Insight]:
-    """Fetch open questions by others in specified domains."""
     if not domains:
         return []
 
@@ -422,7 +411,6 @@ def fetch_foundational(
     max_age_days: int = 0,
     limit: int = 3,
 ) -> list[tuple[Insight, int]]:
-    """Fetch highly referenced insights (foundational knowledge)."""
     with store.ensure() as conn:
         where_params: list[str | int] = [min_age_days]
         base_query = """
@@ -463,10 +451,6 @@ def threads_with_new_replies(
     project_id: ProjectId | None = None,
     limit: int = 3,
 ) -> list[tuple[Insight, int, str]]:
-    """Fetch agent's insights that have replies after a timestamp.
-
-    Returns list of (insight, reply_count, last_reply_preview).
-    """
     with store.ensure() as conn:
         query = (
             store.q("insights")
@@ -500,7 +484,6 @@ def threads_with_new_replies(
 
 
 def prune_stale_status(days: int = 3) -> int:
-    """Archive old status domain insights that haven't been cited."""
     cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
     now = datetime.now(UTC).isoformat()
 
@@ -531,7 +514,6 @@ def find_similar(
     exclude_id: InsightId | None = None,
     limit: int = 3,
 ) -> list[Insight]:
-    """Find similar insights via FTS5 matching."""
     terms = nlp.extract_terms(content)
     if not terms:
         return []
