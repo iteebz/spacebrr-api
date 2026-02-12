@@ -1,5 +1,3 @@
-"""Argparse entrypoint for human-facing commands (spec 08)."""
-
 import argparse
 import sys
 
@@ -11,12 +9,10 @@ def main() -> None:
     )
     subs = parser.add_subparsers(dest="command", help="Command to run")
 
-    # 1. stream
     stream_p = subs.add_parser("stream", help="capture human consciousness")
     stream_p.add_argument("content", nargs="?", help="stream content (max 280 chars)")
     stream_p.add_argument("-p", "--project", help="project name")
 
-    # 2. tail
     tail_p = subs.add_parser("tail", help="live tail of spawn logs")
     tail_p.add_argument("agent", nargs="?", help="filter to specific agent")
     tail_p.add_argument("-n", "--lines", type=int, default=20, help="initial lines to show")
@@ -24,7 +20,6 @@ def main() -> None:
     tail_p.add_argument("-s", "--since", type=int, default=10, help="minutes of history")
     tail_p.add_argument("-w", "--watch", action="store_true", help="follow mode")
 
-    # 3. @
     at_p = subs.add_parser("@", help="route to entity")
     at_p.add_argument("target", help="agent identity or ref (i/xxx, d/xxx, t/xxx)")
     at_p.add_argument("message", help="message to send")
@@ -32,7 +27,6 @@ def main() -> None:
     at_p.add_argument("-s", "--skills", help="comma-separated skills to inject")
     at_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
 
-    # 4. ledger
     ledger_p = subs.add_parser("ledger", help="unified ledger access")
     ledger_p.add_argument(
         "action",
@@ -59,7 +53,6 @@ def main() -> None:
     ledger_p.add_argument("-g", "--all-projects", action="store_true", help="search all projects")
     ledger_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
 
-    # 5. swarm
     swarm_p = subs.add_parser("swarm", help="autonomous agent spawning")
     swarm_subs = swarm_p.add_subparsers(dest="swarm_cmd", help="swarm command")
     swarm_subs.add_parser("on", help="enable autonomous agent wakes")
@@ -69,10 +62,8 @@ def main() -> None:
     swarm_subs.add_parser("reset", help="terminate active spawns and restart")
     swarm_subs.add_parser("continue", help="resume crashed spawns")
 
-    # 6. spawn
     subs.add_parser("spawn", help="execution lifecycle")
 
-    # 7. sleep
     sleep_p = subs.add_parser("sleep", help="close spawn with summary")
     sleep_p.add_argument("summary", nargs="?", help="what you accomplished")
     sleep_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
@@ -80,26 +71,21 @@ def main() -> None:
         "-f", "--force", action="store_true", help="sleep despite uncommitted changes"
     )
 
-    # 8. status
     status_p = subs.add_parser("status", help="what needs doing")
     status_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
 
-    # 9. tree
     tree_p = subs.add_parser("tree", help="workspace topology")
     tree_p.add_argument("path", nargs="?", help="directory to tree")
     tree_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
 
-    # 10. me
     me_p = subs.add_parser("me", help="unified stats: human + swarm")
     me_p.add_argument("-H", "--hours", type=int, default=24, help="time window")
     me_p.add_argument("-j", "--json", action="store_true", help="output as JSON")
 
-    # 11. human
     human_p = subs.add_parser("human", help="manage human identity")
     human_p.add_argument("name", nargs="?", help="show or set human identity")
     human_p.add_argument("--set", dest="set_name", help="explicitly set identity")
 
-    # 12. backup
     subs.add_parser("backup", help="backup space data")
 
     args, _ = parser.parse_known_args()

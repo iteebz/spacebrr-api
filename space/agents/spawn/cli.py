@@ -154,11 +154,9 @@ def _format_log_entry(e: spawn.LogEntry) -> list[str]:
 
 @space_cmd("spawn")
 def main() -> None:
-    """Execution lifecycle."""
     parser = argparse.ArgumentParser(prog="spawn", description="Execution lifecycle")
     subs = parser.add_subparsers(dest="cmd")
 
-    # spawn list
     list_p = subs.add_parser("list", aliases=["ls"], help="List spawns")
     list_p.add_argument("-a", "--active", action="store_true", help="Only active spawns")
     list_p.add_argument("-d", "--done", action="store_true", help="Only completed spawns")
@@ -166,43 +164,36 @@ def main() -> None:
     list_p.add_argument("-n", "--limit", type=int, default=20, help="Max spawns to show")
     list_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # spawn show
     show_p = subs.add_parser("show", help="Show spawn details")
     show_p.add_argument("spawn_id", help="Spawn ID")
     show_p.add_argument("-r", "--refs", action="store_true", help="Show related entities")
     show_p.add_argument("-u", "--usage", action="store_true", help="Show context usage")
     show_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # spawn history
     hist_p = subs.add_parser("history", help="Spawn session history")
     hist_p.add_argument("identity", nargs="?", help="Agent identity")
     hist_p.add_argument("-s", "--since", help="Time window (e.g. 8h, 1d)")
     hist_p.add_argument("-n", "--limit", type=int, default=10, help="Max entries")
     hist_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # spawn trace
     trace_p = subs.add_parser("trace", help="Show spawn trace")
     trace_p.add_argument("spawn_id", help="Spawn ID")
     trace_p.add_argument("-n", "--limit", type=int, default=100, help="Max events")
     trace_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # spawn resume
     resume_p = subs.add_parser("resume", help="Resume spawn")
     resume_p.add_argument("spawn_id", help="Spawn ID")
     resume_p.add_argument("prompt", nargs="?", default="continue", help="Prompt to send")
 
-    # spawn stop
     stop_p = subs.add_parser("stop", help="Stop spawn")
     stop_p.add_argument("ref", help="Spawn ID or agent identity")
 
-    # spawn wake
     wake_p = subs.add_parser("wake", help="Wake autonomous spawn")
     wake_p.add_argument("identity", help="Agent identity")
     wake_p.add_argument("-t", "--timeout", type=int, default=3600, help="Timeout in seconds")
     wake_p.add_argument("-s", "--skills", help="Skills to inject (comma-separated)")
     wake_p.add_argument("-p", "--project", help="Project scope (uses repo_path as cwd)")
 
-    # spawn batch
     batch_p = subs.add_parser("batch", help="Launch batch of spawns")
     batch_p.add_argument("identities", nargs="+", help="Agent identities")
     batch_p.add_argument("-t", "--timeout", type=int, default=3600, help="Timeout in seconds")
@@ -211,12 +202,10 @@ def main() -> None:
     )
     batch_p.add_argument("-p", "--project", help="Project scope (uses repo_path as cwd)")
 
-    # spawn preview
     preview_p = subs.add_parser("preview", aliases=["ctx"], help="Preview spawn context")
     preview_p.add_argument("identity", help="Agent identity")
     preview_p.add_argument("-d", "--diff", dest="diff_with", help="Compare with another agent")
 
-    # spawn run
     run_p = subs.add_parser("run", help="Directed spawn with instruction")
     run_p.add_argument("identity", help="Agent identity")
     run_p.add_argument("instruction", help="Task instruction")
@@ -224,12 +213,10 @@ def main() -> None:
     run_p.add_argument("-s", "--skills", help="Skills to inject (comma-separated)")
     run_p.add_argument("-p", "--project", help="Project scope (uses repo_path as cwd)")
 
-    # spawn tail
     tail_p = subs.add_parser("tail", help="Live follow spawn execution")
     tail_p.add_argument("spawn_id", help="Spawn ID to tail")
     tail_p.add_argument("-v", "--verbose", action="store_true", help="Show edit diffs")
 
-    # model shortcuts
     for model in ["haiku", "opus", "sonnet", "gpt", "flash"]:
         model_p = subs.add_parser(model, help=f"Directed spawn with {model}")
         model_p.add_argument("instruction", help="Task instruction")

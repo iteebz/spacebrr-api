@@ -17,7 +17,6 @@ from space.lib.display.format import ago
 
 @space_cmd("identity")
 def identity_main() -> None:
-    """Manage your human identity."""
     parser = argparse.ArgumentParser(prog="identity", description="Manage your human identity.")
     subs = parser.add_subparsers(dest="cmd")
 
@@ -79,32 +78,26 @@ def _identity_get() -> None:
 
 @space_cmd("agent")
 def agent_main() -> None:
-    """Identity registry."""
     parser = argparse.ArgumentParser(prog="agent", description="Identity registry")
     subs = parser.add_subparsers(dest="cmd")
 
-    # agent list
     list_p = subs.add_parser("list", aliases=["ls"], help="List available agents")
     list_p.add_argument("-a", "--archived", action="store_true", help="Include archived")
     list_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # agent humans
     humans_p = subs.add_parser("humans", help="List human agents")
     humans_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
 
-    # agent info
     info_p = subs.add_parser("info", help="Show agent details")
     info_p.add_argument("handle", help="Agent handle")
     info_p.add_argument("-j", "--json", action="store_true", help="Output as JSON")
     info_p.add_argument("-i", "--identity", action="store_true", help="Show identity text")
 
-    # agent create
     create_p = subs.add_parser("create", help="Register agent")
     create_p.add_argument("handle", help="Agent handle")
     create_p.add_argument("-m", "--model", help="Model ID")
     create_p.add_argument("-i", "--identity", help="Identity filename")
 
-    # agent update
     update_p = subs.add_parser("update", help="Modify agent")
     update_p.add_argument("handle", help="Agent handle")
     update_p.add_argument("-m", "--model", help="Full model name")
@@ -113,27 +106,21 @@ def agent_main() -> None:
     update_p.add_argument("--clear-model", action="store_true", help="Clear stored model")
     update_p.add_argument("--clear-identity", action="store_true", help="Clear stored identity")
 
-    # agent rename
     rename_p = subs.add_parser("rename", help="Change identity")
     rename_p.add_argument("old_ref", help="Current identity")
     rename_p.add_argument("new_name", help="New identity")
 
-    # agent merge
     merge_p = subs.add_parser("merge", help="Merge agents")
     merge_p.add_argument("id_from", help="Source agent to delete")
     merge_p.add_argument("id_to", help="Target agent to absorb data")
     merge_p.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
     merge_p.add_argument("-a", "--as", dest="agent_ref", help="Agent identity")
 
-    # agent archive
     archive_p = subs.add_parser("archive", help="Archive or restore agents")
     archive_p.add_argument("identities", nargs="+", help="Agent identities")
     archive_p.add_argument("--restore", action="store_true", help="Restore instead of archive")
 
-    # agent ensure
     subs.add_parser("ensure", help="Register default agents")
-
-    # agent models
     subs.add_parser("models", help="List LLM models")
 
     args = parser.parse_args()

@@ -101,7 +101,6 @@ def _fetch_crashed(
 
 @space_cmd("swarm")
 def main() -> None:
-    """Daemon control for autonomous spawns."""
     parser = argparse.ArgumentParser(prog="swarm", description="Daemon control")
     subs = parser.add_subparsers(dest="cmd")
 

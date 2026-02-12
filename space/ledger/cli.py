@@ -1,5 +1,3 @@
-"""Unified ledger CLI router (spec 08)."""
-
 import argparse
 import json
 import sys
@@ -32,7 +30,6 @@ from space.lib.display.format import ago
 
 
 def _resolve_agent(ref: str | None) -> Agent:
-    """Resolve agent from ref or current identity."""
     agent_id = ref or identity_lib.current()
     if not agent_id:
         fail("Missing: --as or SPACE_IDENTITY")
@@ -40,7 +37,6 @@ def _resolve_agent(ref: str | None) -> Agent:
 
 
 def route(args: argparse.Namespace) -> None:
-    """Route ledger command to appropriate handler."""
     if args.action == "add":
         _add(args)
     elif args.action == "list":
@@ -64,7 +60,6 @@ def route(args: argparse.Namespace) -> None:
 
 
 def _add(args: argparse.Namespace) -> None:
-    """Add insight/task/decision/reply/project."""
     if not args.artifact:
         fail("type and content required for add")
 
@@ -132,7 +127,6 @@ def _add(args: argparse.Namespace) -> None:
 
 
 def _list(args: argparse.Namespace) -> None:
-    """List insights/tasks/decisions/projects."""
     project_id = projects.get_scope()
     type_arg = args.artifact[0] if args.artifact else "t"
 
@@ -215,7 +209,6 @@ def _list(args: argparse.Namespace) -> None:
 
 
 def _show(args: argparse.Namespace) -> None:
-    """Show insight/task/decision/project (threaded)."""
     if not args.artifact:
         fail("ref required for show")
 
@@ -353,7 +346,6 @@ def _render_generic(item, ref: str, tty: bool) -> None:
 
 
 def _render_decision_card(decision: Decision, ref: str, tty: bool) -> None:
-    """Render decision with status badge, timestamps, rationale."""
     color: Callable[[str], str]
     if decision.rejected_at:
         mark = "✗ REJECTED"
@@ -414,7 +406,6 @@ def _render_decision_card(decision: Decision, ref: str, tty: bool) -> None:
 
 
 def _inbox(args: argparse.Namespace) -> None:
-    """Show inbox."""
     agent = _resolve_agent(None)
     current_handle = agent.handle
 
@@ -434,7 +425,6 @@ def _inbox(args: argparse.Namespace) -> None:
 
 
 def _commit(args: argparse.Namespace) -> None:
-    """Commit a decision."""
     if not args.artifact:
         fail("decision ref required for commit")
     decision_ref = args.artifact[0]
@@ -451,7 +441,6 @@ def _commit(args: argparse.Namespace) -> None:
 
 
 def _reject(args: argparse.Namespace) -> None:
-    """Reject a decision."""
     if not args.artifact:
         fail("decision ref required for reject")
     decision_ref = args.artifact[0]
@@ -468,7 +457,6 @@ def _reject(args: argparse.Namespace) -> None:
 
 
 def _action(args: argparse.Namespace) -> None:
-    """Mark decision as actioned."""
     if not args.artifact:
         fail("decision ref required for action")
     decision_ref = args.artifact[0]
@@ -487,7 +475,6 @@ def _action(args: argparse.Namespace) -> None:
 
 
 def _search(args: argparse.Namespace) -> None:
-    """Search across primitives."""
     if not args.artifact:
         fail("query required for search")
 
@@ -556,7 +543,6 @@ def _cancel(args: argparse.Namespace) -> None:
 
 
 def status_cmd(agent_handle: str | None = None, json_output: bool = False) -> None:
-    """What needs doing. Projects, open questions, unclaimed tasks, inbox."""
     data = status_mod.get(agent_handle)
 
     if json_output:
@@ -597,7 +583,6 @@ def status_cmd(agent_handle: str | None = None, json_output: bool = False) -> No
 
 
 def main() -> None:
-    """Ledger CLI entrypoint."""
     parser = argparse.ArgumentParser(prog="ledger", description="unified ledger access")
     parser.add_argument(
         "action",

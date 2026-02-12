@@ -307,7 +307,6 @@ def render_swarm(json_output: bool = False) -> None:
 
 @space_cmd("stats")
 def main() -> None:
-    """Swarm productivity metrics."""
     parser = argparse.ArgumentParser(prog="stats", description="Swarm productivity metrics")
     parser.add_argument("-h", "--hours", type=int, default=24, help="Time window in hours")
     parser.add_argument("--days", type=int, default=7, help="Time window in days")

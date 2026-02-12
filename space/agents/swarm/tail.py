@@ -193,8 +193,6 @@ def parse_spawn_file(
         return []
 
     mtime = path.stat().st_mtime
-
-    # Check cache (LRU: move to end on access)
     if path in _RENDER_CACHE:
         cached_mtime, cached_data = _RENDER_CACHE.pop(path)
         if cached_mtime == mtime:
@@ -285,8 +283,6 @@ def save_tail(target_date: date) -> dict[str, int | str]:
     out = tail_dir()
     out.mkdir(parents=True, exist_ok=True)
     dest = tail_path(target_date)
-
-    # Atomic write: write to temp file in same dir, then replace
     with tempfile.NamedTemporaryFile("w", dir=out, delete=False) as f:
         f.write("\n".join(lines))
         temp_path = f.name
