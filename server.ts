@@ -7,6 +7,7 @@ import fs from 'fs/promises'
 import os from 'os'
 import { fileURLToPath } from 'url'
 import Stripe from 'stripe'
+import { createSession, getSession, updateSession, findSessionsByCustomerId } from './db.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -43,7 +44,6 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback'
 
-const sessions = new Map<string, { token: string, githubUser: string, customerId?: string, subscriptionStatus?: string }>()
 const oauthStates = new Map<string, { created: number, frontendRedirect?: string }>()
 
 app.get('/auth/github', (req, res) => {
@@ -102,7 +102,7 @@ app.get('/auth/github/callback', async (req, res) => {
     })
     const userData = await userResponse.json()
     const sessionId = randomUUID()
-    sessions.set(sessionId, { token: accessToken, githubUser: userData.login })
+    createSession(sessionId, accessToken, userData.login)
 
     const frontendRedirect = stateData.frontendRedirect
     if (frontendRedirect) {
@@ -130,7 +130,7 @@ app.get('/auth/github/callback', async (req, res) => {
 
 app.get('/api/repos', async (req, res) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '')
-  const session = sessionId ? sessions.get(sessionId) : null
+  const session = sessionId ? getSession(sessionId) : null
   
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -213,7 +213,7 @@ app.get('/api/templates', (req, res) => {
 
 app.post('/api/provision', async (req, res) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '')
-  const session = sessionId ? sessions.get(sessionId) : null
+  const session = sessionId ? getSession(sessionId) : null
   
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -313,7 +313,7 @@ app.post('/api/waitlist', async (req, res) => {
 
 app.post('/api/checkout', async (req, res) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '')
-  const session = sessionId ? sessions.get(sessionId) : null
+  const session = sessionId ? getSession(sessionId) : null
   
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -350,7 +350,7 @@ app.post('/api/checkout', async (req, res) => {
 
 app.get('/api/subscription', async (req, res) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '')
-  const session = sessionId ? sessions.get(sessionId) : null
+  const session = sessionId ? getSession(sessionId) : null
   
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -377,11 +377,11 @@ app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async
       const metadata = checkoutSession.metadata
       const sessionId = metadata?.session_id
       
-      if (sessionId && sessions.has(sessionId)) {
-        const session = sessions.get(sessionId)!
-        session.customerId = checkoutSession.customer as string
-        session.subscriptionStatus = 'active'
-        sessions.set(sessionId, session)
+      if (sessionId && getSession(sessionId)) {
+        updateSession(sessionId, {
+          customerId: checkoutSession.customer as string,
+          subscriptionStatus: 'active',
+        })
       }
     }
 
@@ -389,11 +389,9 @@ app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async
       const subscription = event.data.object as Stripe.Subscription
       const customerId = subscription.customer as string
       
-      for (const [sessionId, session] of sessions.entries()) {
-        if (session.customerId === customerId) {
-          session.subscriptionStatus = subscription.status
-          sessions.set(sessionId, session)
-        }
+      const sessions = findSessionsByCustomerId(customerId)
+      for (const session of sessions) {
+        updateSession(session.id, { subscriptionStatus: subscription.status })
       }
     }
 
