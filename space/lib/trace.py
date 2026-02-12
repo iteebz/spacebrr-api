@@ -1,5 +1,3 @@
-"""Event trace formatting for display."""
-
 import difflib
 import re
 from pathlib import Path

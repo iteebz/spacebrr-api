@@ -1,5 +1,3 @@
-"""Git worktree operations. Subprocess + git CLI."""
-
 import os
 import subprocess
 from dataclasses import dataclass
@@ -70,7 +68,6 @@ def _run_silent(args: list[str], cwd: Path | None = None) -> subprocess.Complete
 
 
 def clone_bare(url: str, target_path: Path) -> Path:
-    """Clone a repo as bare."""
     if target_path.exists():
         return target_path
     target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -79,7 +76,6 @@ def clone_bare(url: str, target_path: Path) -> Path:
 
 
 def init_bare(target_path: Path) -> Path:
-    """Initialize a new bare repo."""
     if target_path.exists():
         return target_path
     target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -88,7 +84,6 @@ def init_bare(target_path: Path) -> Path:
 
 
 def ensure_branch(repo: Path, branch: str) -> bool:
-    """Ensure branch exists, create from default if not. Returns True if created."""
     if branch_exists(repo, branch):
         return False
     default = get_default_branch(repo)
@@ -97,10 +92,6 @@ def ensure_branch(repo: Path, branch: str) -> bool:
 
 
 def get_default_branch(repo: Path) -> str:
-    """Get the default branch name (main or master).
-
-    Checks main/master first to handle worktrees correctly.
-    """
     for branch in ["main", "master"]:
         check = _run_silent(["git", "-C", str(repo), "rev-parse", "--verify", branch])
         if check.returncode == 0:
@@ -118,11 +109,6 @@ def create_worktree(
     branch: str,
     base_branch: str | None = None,
 ) -> Path:
-    """Create a new worktree with a new branch.
-
-    Uses namespaced path: {repo_name}--{branch}
-    Works for both bare and non-bare repos.
-    """
     paths.ensure_dirs()
     repo_name = repo.stem.replace(".git", "")
     worktree_path = paths.trees_dir() / f"{repo_name}--{branch}"
@@ -152,7 +138,6 @@ def create_worktree(
 
 
 def remove_worktree(repo: Path, worktree_path: Path, force: bool = False):
-    """Remove a worktree. Works for both bare and non-bare repos."""
     if not worktree_path.exists():
         return
     args = ["git", "-C", str(repo), "worktree", "remove"]
@@ -163,7 +148,6 @@ def remove_worktree(repo: Path, worktree_path: Path, force: bool = False):
 
 
 def delete_branch(bare_repo: Path, branch: str, force: bool = False):
-    """Delete a branch from the bare repo."""
     flag = "-D" if force else "-d"
     _run(["git", "-C", str(bare_repo), "branch", flag, branch])
 
@@ -178,7 +162,6 @@ def _parse_worktree(data: dict[str, str]) -> WorktreeInfo:
 
 
 def list_worktrees(bare_repo: Path) -> list[WorktreeInfo]:
-    """List all worktrees for a bare repo."""
     result = _run(["git", "-C", str(bare_repo), "worktree", "list", "--porcelain"])
 
     worktrees: list[WorktreeInfo] = []
@@ -205,7 +188,6 @@ def list_worktrees(bare_repo: Path) -> list[WorktreeInfo]:
 
 
 def get_diff_stat(worktree_path: Path, base: str | None = None) -> DiffStat:
-    """Get diff statistics between worktree and base branch."""
     if base is None:
         base = get_default_branch(worktree_path)
 
@@ -238,13 +220,11 @@ def get_diff_stat(worktree_path: Path, base: str | None = None) -> DiffStat:
 
 
 def commit_count(worktree_path: Path, base: str | None = None) -> int:
-    """Count commits ahead of base branch."""
     ahead, _ = diverged(worktree_path, base)
     return ahead
 
 
 def diverged(worktree_path: Path, base: str | None = None, fetch: bool = False) -> tuple[int, int]:
-    """Count divergence from base branch. Returns (ahead, behind)."""
     if base is None:
         base = get_default_branch(worktree_path)
 
@@ -266,7 +246,6 @@ def diverged(worktree_path: Path, base: str | None = None, fetch: bool = False) 
 
 
 def dirty(worktree_path: Path) -> bool:
-    """Check if worktree has uncommitted changes."""
     result = _run_silent(["git", "-C", str(worktree_path), "status", "--porcelain"])
     return bool(result.stdout.strip())
 
@@ -286,7 +265,6 @@ def merge(
     author: Author | None = None,
     trailers: dict[str, str] | None = None,
 ) -> str:
-    """Squash merge branch into target. Returns commit hash."""
     if not _validate_branch(branch):
         raise GitError(f"Invalid branch name: {branch}")
     if target_branch is None:
@@ -304,17 +282,14 @@ def merge(
 
 
 def push_branch(bare_repo: Path, branch: str, remote: str = "origin"):
-    """Push a branch to remote."""
     _run(["git", "-C", str(bare_repo), "push", remote, branch])
 
 
 def sync(bare_repo: Path, remote: str = "origin"):
-    """Sync from remote."""
     _run(["git", "-C", str(bare_repo), "fetch", remote])
 
 
 def _fetch_if_remote(bare_repo: Path):
-    """Fetch from origin if remote exists."""
     result = _run_silent(["git", "-C", str(bare_repo), "remote"])
     remotes = result.stdout.strip().split("\n") if result.stdout.strip() else []
     if "origin" in remotes:
@@ -322,19 +297,16 @@ def _fetch_if_remote(bare_repo: Path):
 
 
 def worktree_exists(bare_repo: Path, branch: str) -> bool:
-    """Check if a worktree exists for the given branch."""
     worktrees = list_worktrees(bare_repo)
     return any(wt.branch == branch for wt in worktrees)
 
 
 def branch_exists(bare_repo: Path, branch: str) -> bool:
-    """Check if a branch exists."""
     result = _run_silent(["git", "-C", str(bare_repo), "rev-parse", "--verify", branch])
     return result.returncode == 0
 
 
 def current_branch(repo: Path) -> str | None:
-    """Get current branch name. Returns None if detached HEAD."""
     result = _run_silent(["git", "-C", str(repo), "symbolic-ref", "--short", "HEAD"])
     if result.returncode != 0:
         return None
@@ -342,7 +314,6 @@ def current_branch(repo: Path) -> str | None:
 
 
 def sanitize_branch(name: str) -> str:
-    """Convert a string to a valid git branch name."""
     safe = name.lower()
     safe = safe.replace(" ", "-")
     safe = "".join(c for c in safe if c.isalnum() or c in "-_")
@@ -351,19 +322,16 @@ def sanitize_branch(name: str) -> str:
 
 
 def validate_branch(name: str) -> bool:
-    """Public branch-name contract for callers and tests."""
     return _validate_branch(name)
 
 
 def _validate_branch(name: str) -> bool:
-    """Validate branch name is safe for git operations."""
     if not name or ".." in name or name.startswith("-"):
         return False
     return all(c.isalnum() or c in "-_/." for c in name)
 
 
 def get_commit_timestamp(commit: str, repo: Path | None = None) -> str | None:
-    """Get ISO timestamp for a commit. Returns None if commit not found."""
     cwd = repo or Path.cwd()
     result = _run_silent(["git", "-C", str(cwd), "show", "-s", "--format=%cI", commit])
     if result.returncode != 0:
@@ -372,7 +340,6 @@ def get_commit_timestamp(commit: str, repo: Path | None = None) -> str | None:
 
 
 def get_commits(worktree_path: Path, base: str | None = None) -> list[dict[str, str]]:
-    """Get commit list between worktree and base branch."""
     if base is None:
         base = get_default_branch(worktree_path)
 
@@ -391,18 +358,15 @@ def get_commits(worktree_path: Path, base: str | None = None) -> list[dict[str, 
 
 
 def compute_worktree_path(repo: Path, branch: str) -> Path:
-    """Compute worktree path for a repo and branch."""
     repo_name = repo.stem.replace(".git", "")
     return paths.trees_dir() / f"{repo_name}--{branch}"
 
 
 def rename_branch(bare_repo: Path, old_branch: str, new_branch: str):
-    """Rename a git branch."""
     _run(["git", "-C", str(bare_repo), "branch", "-m", old_branch, new_branch])
 
 
 def restore_worktree(repo: Path, branch: str) -> Path:
-    """Restore worktree for existing branch. Recreation after deletion."""
     if not branch_exists(repo, branch):
         raise GitError(f"Branch does not exist: {branch}")
 
@@ -417,7 +381,6 @@ def restore_worktree(repo: Path, branch: str) -> Path:
 
 
 def ensure_worktree(repo: Path, branch: str) -> Path:
-    """Ensure worktree exists for branch. Idempotent: returns existing or restores."""
     worktree_path = compute_worktree_path(repo, branch)
 
     if worktree_path.exists():
@@ -431,7 +394,6 @@ def check_merge(
     branch: str,
     target_branch: str | None = None,
 ) -> MergeCheck:
-    """Check if branch can merge cleanly. Dry-run via git merge-tree."""
     if target_branch is None:
         target_branch = get_default_branch(repo)
 
@@ -453,10 +415,6 @@ def clean_worktree(
     do_merge: bool = False,
     commit_message: str | None = None,
 ) -> dict[str, Any]:
-    """Clean up worktree with optional squash merge.
-
-    Returns dict with merge result: {"merged": bool, "commit": str | None}
-    """
     result: dict[str, Any] = {"merged": False, "commit": None}
 
     if do_merge:

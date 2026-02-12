@@ -263,7 +263,6 @@ def _format_table_deltas(by_table: dict[str, int]) -> str:
 
 @space_cmd("backup")
 def main(args: argparse.Namespace | None = None) -> None:
-    """Backup space data."""
     if args is None:
         parser = argparse.ArgumentParser(description="Backup space data")
         if len(sys.argv) > 1 and sys.argv[1] == "backup":
