@@ -110,12 +110,13 @@ app.get('/auth/github/callback', async (req, res) => {
       redirectUrl.searchParams.set('session', sessionId)
       res.redirect(redirectUrl.toString())
     } else {
+      const safeSessionId = sessionId.replace(/[^a-f0-9-]/gi, '')
       res.send(`
         <html>
           <body>
             <h1>Authentication successful</h1>
             <script>
-              localStorage.setItem('session_id', '${sessionId}')
+              localStorage.setItem('session_id', '${safeSessionId}')
               window.location.href = '/select'
             </script>
           </body>
@@ -225,6 +226,14 @@ app.post('/api/provision', async (req, res) => {
 
   if (!TEMPLATES[template]) {
     return res.status(400).json({ error: 'Invalid template' })
+  }
+
+  if (!/^[a-zA-Z0-9._-]+$/.test(name) || name.includes('..')) {
+    return res.status(400).json({ error: 'Invalid repository name' })
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(session.githubUser)) {
+    return res.status(400).json({ error: 'Invalid username' })
   }
 
   try {
@@ -417,7 +426,7 @@ app.get('/dashboard/:projectId', (req, res) => {
       <h1>Dashboard</h1>
       <div id="ledger" class="loading">Loading ledger...</div>
       <script>
-        const projectId = '${req.params.projectId}'
+        const projectId = '${req.params.projectId.replace(/[^a-f0-9-]/gi, '')}'
         fetch('/api/ledger/' + projectId)
           .then(r => r.json())
           .then(items => {
