@@ -43,14 +43,15 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback'
 
 const sessions = new Map<string, { token: string, githubUser: string, customerId?: string, subscriptionStatus?: string }>()
-const oauthStates = new Map<string, { created: number }>()
+const oauthStates = new Map<string, { created: number, frontendRedirect?: string }>()
 
 app.get('/auth/github', (req, res) => {
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
     return res.status(503).send('OAuth not configured')
   }
   const state = randomUUID()
-  oauthStates.set(state, { created: Date.now() })
+  const frontendRedirect = req.query.redirect as string | undefined
+  oauthStates.set(state, { created: Date.now(), frontendRedirect })
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=repo&state=${state}`
   res.redirect(githubAuthUrl)
 })
@@ -102,17 +103,24 @@ app.get('/auth/github/callback', async (req, res) => {
     const sessionId = randomUUID()
     sessions.set(sessionId, { token: accessToken, githubUser: userData.login })
 
-    res.send(`
-      <html>
-        <body>
-          <h1>Authentication successful</h1>
-          <script>
-            localStorage.setItem('session_id', '${sessionId}')
-            window.location.href = '/select'
-          </script>
-        </body>
-      </html>
-    `)
+    const frontendRedirect = stateData.frontendRedirect
+    if (frontendRedirect) {
+      const redirectUrl = new URL(frontendRedirect)
+      redirectUrl.searchParams.set('session', sessionId)
+      res.redirect(redirectUrl.toString())
+    } else {
+      res.send(`
+        <html>
+          <body>
+            <h1>Authentication successful</h1>
+            <script>
+              localStorage.setItem('session_id', '${sessionId}')
+              window.location.href = '/select'
+            </script>
+          </body>
+        </html>
+      `)
+    }
   } catch (error) {
     res.status(500).send('Authentication failed')
   }
