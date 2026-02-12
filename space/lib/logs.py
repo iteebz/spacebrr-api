@@ -1,4 +1,3 @@
-"""Unified logging for daemon, API, and client processes."""
 
 import json
 import logging

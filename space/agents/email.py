@@ -1,4 +1,3 @@
-"""External email via Resend (draft, approve, send, sync, triage)."""
 
 import logging
 import uuid

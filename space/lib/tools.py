@@ -1,9 +1,3 @@
-"""Canonical tool taxonomy with provider mappings.
-
-Defines a cross-provider tool abstraction. Constitutions declare allowed
-capabilities; we compute provider-specific deny lists at spawn time.
-"""
-
 import argparse
 import json
 import sys

@@ -1,8 +1,3 @@
-"""One-shot repair: upgrades existing DBs to flattened 001_foundation schema.
-
-All prior callable migrations (002-011) are folded into 001_foundation.sql.
-"""
-
 import sqlite3
 
 

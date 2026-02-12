@@ -1,4 +1,3 @@
-"""Compute router: check if agent's provider has capacity."""
 
 import logging
 import re

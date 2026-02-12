@@ -1,9 +1,3 @@
-"""Core domain models.
-
-spawn_id is optional on all primitives: CLI must work for any agent (Claude Code,
-Cursor, etc.), not just space-os spawn. Space agents get env var conveniences.
-"""
-
 from dataclasses import dataclass
 from enum import Enum
 

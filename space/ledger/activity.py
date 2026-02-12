@@ -1,4 +1,3 @@
-"""Activity: audit log for governance events."""
 
 from dataclasses import dataclass
 from typing import Literal

@@ -1,4 +1,3 @@
-"""Spawn primitives: process execution and lifecycle."""
 
 from .launch import launch, write_daemon_event
 from .lifecycle import (

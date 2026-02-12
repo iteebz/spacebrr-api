@@ -1,4 +1,3 @@
-"""Skill reference for agents."""
 
 import argparse
 import re

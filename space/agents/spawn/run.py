@@ -1,4 +1,3 @@
-"""Spawn execution: start and resume."""
 
 from __future__ import annotations
 

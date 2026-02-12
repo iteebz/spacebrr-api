@@ -1,10 +1,3 @@
-"""Trace integrity: merkle hash chain for tamper detection.
-
-Each event hash includes: event content + previous hash.
-Final root hash stored in spawn.trace_hash.
-Verification re-computes chain and compares.
-"""
-
 import hashlib
 from pathlib import Path
 

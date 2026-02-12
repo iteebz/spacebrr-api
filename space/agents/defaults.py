@@ -1,4 +1,3 @@
-"""Agent registration from identities directory."""
 
 from space import agents, ctx
 from space.core.errors import ConflictError

@@ -1,4 +1,3 @@
-"""Core type definitions. IDs are str subclasses for runtime type safety."""
 
 from enum import Enum
 from typing import Literal

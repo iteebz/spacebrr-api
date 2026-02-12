@@ -1,9 +1,3 @@
-"""Spawn lifecycle hooks.
-
-Hooks run after spawn completion. Registry is extendable.
-Built-in hooks: backup (periodic), wake (@human notifications), batch (completion tracking), failure (error alerts).
-"""
-
 import logging
 import re
 import uuid

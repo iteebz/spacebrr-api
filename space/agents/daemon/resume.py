@@ -1,4 +1,3 @@
-"""Crash recovery: resume spawns with existing sessions."""
 
 import logging
 

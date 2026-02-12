@@ -1,4 +1,3 @@
-"""Rename agents.identity -> handle, agents.constitution -> identity."""
 
 import sqlite3
 

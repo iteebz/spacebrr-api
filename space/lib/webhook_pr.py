@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""GitHub PR webhook handler: record PR events for retention metrics."""
-
 import sys
 from datetime import UTC, datetime
 

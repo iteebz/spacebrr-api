@@ -1,4 +1,3 @@
-"""Swarm configuration: on/off, limits, status."""
 
 from datetime import UTC, datetime
 

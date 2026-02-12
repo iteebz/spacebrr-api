@@ -1,4 +1,3 @@
-"""Skill loading and injection."""
 
 import re
 from pathlib import Path

@@ -1,9 +1,3 @@
-"""Artifact resolution and lifecycle helpers.
-
-Centralizes "prefix or full id" lookup across primitive tables
-and shared lifecycle operations (delete, archive).
-"""
-
 from datetime import UTC, datetime
 
 from space.core.errors import NotFoundError

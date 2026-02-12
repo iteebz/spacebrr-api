@@ -1,4 +1,3 @@
-"""Spawn log: activity history with enriched data."""
 
 from dataclasses import dataclass
 

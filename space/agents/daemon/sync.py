@@ -1,4 +1,3 @@
-"""Periodic sync: email inbound."""
 
 import logging
 import time

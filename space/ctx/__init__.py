@@ -1,13 +1,3 @@
-"""Agent context assembly.
-
-ctx/welcome.md          — orientation. loop, primitives, discipline.
-ctx/constitution.md     — law. invariants, authority, anti-patterns, craft.
-ctx/identities/*.md     — persona. lens, principles, tools.
-~/space/ARCH.md         — map. geometry, locked decisions, workspace.
-~/space/SPACE.md        — vector. human steering.
-ctx/skills/*.md         — loadable capabilities.
-"""
-
 from pathlib import Path
 
 from space import agents

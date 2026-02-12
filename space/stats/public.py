@@ -1,4 +1,3 @@
-"""Public stats for external consumption (website, etc)."""
 
 import contextlib
 import json

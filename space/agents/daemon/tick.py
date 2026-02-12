@@ -1,4 +1,3 @@
-"""Tick loop: the daemon's heartbeat."""
 
 import logging
 import sys

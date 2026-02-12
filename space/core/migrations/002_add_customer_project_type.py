@@ -1,4 +1,3 @@
-"""Add customer project type and fields for SaaS multi-tenancy."""
 
 import sqlite3
 

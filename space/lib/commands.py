@@ -1,10 +1,3 @@
-"""CLI command wrappers with telemetry.
-
-Provides:
-- space_cmd: decorator for standalone command functions with telemetry
-- echo/fail: output helpers
-"""
-
 import inspect
 import logging
 import sys

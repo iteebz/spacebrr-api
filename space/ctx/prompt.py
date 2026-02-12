@@ -1,4 +1,3 @@
-"""Spawn context assembly."""
 
 from datetime import UTC, datetime
 

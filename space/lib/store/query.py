@@ -1,13 +1,3 @@
-"""Query builder for consistent SQL construction.
-
-Eliminates the repeated pattern:
-    params: list[str | int] = []
-    query = "SELECT * FROM table WHERE deleted_at IS NULL"
-    if project_id:
-        query += " AND project_id = ?"
-        params.append(project_id)
-"""
-
 from __future__ import annotations
 
 import sqlite3

@@ -1,4 +1,3 @@
-"""Process management: lock-file-only singleton daemon."""
 
 import contextlib
 import logging

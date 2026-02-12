@@ -1,4 +1,3 @@
-"""Ephemeral runtime state: ~/.space/state.yaml"""
 
 import fcntl
 from contextlib import contextmanager

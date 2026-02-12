@@ -1,4 +1,3 @@
-"""SSH: wrapper around standard ssh with space conventions."""
 
 import argparse
 import socket

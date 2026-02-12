@@ -1,8 +1,3 @@
-"""Codex provider.
-
-Normalize stdout events and supply launch arguments.
-"""
-
 from pathlib import Path
 from typing import Any
 

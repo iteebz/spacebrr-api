@@ -1,4 +1,3 @@
-"""Daemon: autonomous agent spawning loop."""
 
 from space.agents.daemon import cli, lifecycle, resume, scheduler, swarm, sync, tick
 from space.agents.daemon.lifecycle import pid, run, start, stop

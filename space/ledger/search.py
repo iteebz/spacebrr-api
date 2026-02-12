@@ -1,4 +1,3 @@
-"""Unified search across all primitives via FTS5."""
 
 import argparse
 import json

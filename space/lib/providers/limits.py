@@ -1,4 +1,3 @@
-"""Provider usage limits - Claude Code and OpenAI Codex."""
 
 import json
 import os

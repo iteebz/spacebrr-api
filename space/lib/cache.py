@@ -1,4 +1,3 @@
-"""In-memory cache with TTL for daemon state reads."""
 
 import threading
 from collections.abc import Callable

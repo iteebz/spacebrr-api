@@ -1,4 +1,3 @@
-"""Agent selection and spawning."""
 
 import logging
 import random

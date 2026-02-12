@@ -1,4 +1,3 @@
-"""Spawn launch: unified entry point."""
 
 from __future__ import annotations
 

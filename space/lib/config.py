@@ -1,4 +1,3 @@
-"""Unified config: ~/.space/config.yaml"""
 
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path

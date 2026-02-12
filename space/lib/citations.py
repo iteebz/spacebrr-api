@@ -1,4 +1,3 @@
-"""Citation extraction and storage for artifact references."""
 
 import re
 import sqlite3

@@ -1,4 +1,3 @@
-"""Actionable swarm status by project."""
 
 from dataclasses import dataclass
 

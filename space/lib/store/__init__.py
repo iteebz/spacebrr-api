@@ -1,4 +1,3 @@
-"""Database connection management and utilities."""
 
 from space.lib.store.connection import (
     ARCHIVABLE_TABLES,

@@ -1,8 +1,3 @@
-"""Supervisor: owns the lock file, restarts child on crash.
-
-Imports ZERO space.* modules — immune to bad edits in the codebase.
-"""
-
 import contextlib
 import fcntl
 import os

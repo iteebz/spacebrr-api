@@ -1,4 +1,3 @@
-"""Ledger: unified timeline of primitives."""
 
 import sqlite3
 from dataclasses import dataclass
