@@ -90,7 +90,6 @@ def _calculate_score(
     arch_violations: int = 0,
     stashes: int = 0,
 ) -> int:
-    """Calculate health score from component results."""
     score = 100
     if not lint_ok:
         score -= min(20, lint_violations * 2)
@@ -138,7 +137,6 @@ def _parse_ci_output(output: str) -> dict[str, Any]:
 
 
 def _count_suppressions(repo: Path) -> int:
-    """Count type-checking suppressions in the codebase."""
     try:
         pattern = r"# type: ignore|pyright: ignore"
         cmd = ["grep", "-rE", pattern, "space"]

@@ -57,7 +57,6 @@ def _fetch_replies(conn: sqlite3.Connection, parent_type: str, parent_id: str) -
 
 
 def fetch(limit: int = 50, project_id: ProjectId | None = None) -> list[LedgerItem]:
-    """Fetch recent primitives as a unified ledger."""
     project_filter = "AND i.project_id = ?" if project_id else ""
     task_project_filter = "AND t.project_id = ?" if project_id else ""
     decision_project_filter = "AND d.project_id = ?" if project_id else ""
@@ -100,7 +99,6 @@ def fetch(limit: int = 50, project_id: ProjectId | None = None) -> list[LedgerIt
 
 
 def thread(item_type: str, item_id: str) -> tuple[LedgerItem | None, list[LedgerItem]]:
-    """Fetch an artifact and all items linked to it. Accepts full UUID or 8+ char prefix."""
     if item_type == "decision":
         full_id = by_prefix(item_id, "decisions", "id", DecisionId)
         if not full_id:

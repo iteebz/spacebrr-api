@@ -185,10 +185,6 @@ def resolve[T: DataclassInstance](
 
 
 def resolve_short(ref: str) -> tuple[str, str]:
-    """Parse ref like 'i/abc123' into ('insight', 'abc123-full-uuid').
-
-    Returns (artifact_type, full_id).
-    """
     if "/" not in ref:
         raise ValidationError(f"Invalid ref format: {ref} (expected x/id)")
 

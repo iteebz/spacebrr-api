@@ -277,10 +277,6 @@ def events_file_path(spawn_id: str) -> Path | None:
 
 
 def was_resumed(spawn_id: str) -> bool | None:
-    """Check if spawn was resumed from an existing session.
-
-    Returns True if resumed, False if fresh, None if unknown.
-    """
     events_file = find_events_file(spawn_id)
     if not events_file or not events_file.exists():
         return None

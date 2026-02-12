@@ -29,7 +29,6 @@ def task_launch_args(allowed_tools: set[tools.Tool] | None = None) -> list[str]:
 
 
 def _images_to_base64(image_filenames: list[str]) -> list[dict[str, Any]]:
-    """Convert image filenames to base64 content blocks."""
     blocks: list[dict[str, Any]] = []
     uploads_dir = paths.dot_space() / "images" / "uploads"
     images_dir = paths.dot_space() / "images"
@@ -216,7 +215,6 @@ def normalize_event(
 
 
 def parse_usage(events_file: Path) -> UsageStats:
-    """Per-turn usage from tail of file. Only needs last usage event."""
     model = "unknown"
     last_usage = {}
 

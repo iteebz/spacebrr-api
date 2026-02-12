@@ -71,7 +71,6 @@ def _capture_telemetry(usage: str, args: dict[str, Any] | None, exit_code: int, 
 
 
 def _wrap_handler(usage: str, f: Callable[..., Any]) -> Callable[..., Any]:
-    """Wrap a command handler with telemetry and error handling."""
     sig = inspect.signature(f)
 
     @wraps(f)
@@ -103,7 +102,6 @@ def _wrap_handler(usage: str, f: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def space_cmd(usage: str):
-    """Decorator for standalone command functions with telemetry."""
 
     def decorator[F: Callable[..., Any]](f: F) -> F:
         return _wrap_handler(usage, f)  # type: ignore[return-value]
@@ -112,12 +110,10 @@ def space_cmd(usage: str):
 
 
 def echo(msg: str = "", err: bool = False) -> None:
-    """Print to stdout/stderr."""
     stream = sys.stderr if err else sys.stdout
     stream.write(msg + "\n")
 
 
 def fail(msg: str, code: int = 1) -> NoReturn:
-    """Print error and exit."""
     sys.stderr.write(msg + "\n")
     sys.exit(code)

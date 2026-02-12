@@ -5,10 +5,6 @@ from space.lib import store
 
 
 def merge_rate(project_id: ProjectId | None = None, days: int = 30) -> dict[str, Any]:
-    """PR merge rate: swarm-opened PRs vs customer-merged.
-    
-    Success = % PRs opened that get merged blind (no swarm author merging their own).
-    """
     where_project = "AND pr.project_id = ?" if project_id else ""
     params = ([project_id] if project_id else []) + [f"-{days}"]
     
@@ -40,10 +36,6 @@ def merge_rate(project_id: ProjectId | None = None, days: int = 30) -> dict[str,
 
 
 def engagement_per_project(days: int = 7) -> list[dict[str, Any]]:
-    """Spawns/day per customer project.
-    
-    Measures swarm activity per customer repo.
-    """
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -74,11 +66,6 @@ def engagement_per_project(days: int = 7) -> list[dict[str, Any]]:
 
 
 def compounding_delta(project_id: ProjectId, baseline_day: int = 1, target_day: int = 30) -> dict[str, Any]:
-    """Quality score delta: day 1 vs day 30.
-    
-    Validates ledger accumulation = better output over time.
-    Requires health_metrics per project.
-    """
     with store.ensure() as conn:
         baseline_row = conn.execute(
             """
@@ -119,7 +106,6 @@ def compounding_delta(project_id: ProjectId, baseline_day: int = 1, target_day: 
 
 
 def summary(project_id: ProjectId | None = None) -> dict[str, Any]:
-    """Retention proof dashboard: merge rate + compounding + engagement."""
     merge_data = merge_rate(project_id, days=30)
     engagement_data = engagement_per_project(days=7) if not project_id else []
     

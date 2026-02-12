@@ -31,7 +31,6 @@ class Status:
 
 
 def get(agent_handle: str | None = None) -> Status:
-    """Get actionable status across all projects."""
     project_statuses = [
         ProjectStatus(
             name=p.name,

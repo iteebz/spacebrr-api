@@ -159,7 +159,6 @@ def _estimate_tokens(events_file: Path) -> tuple[int, int, str]:
 
 
 def parse_usage(events_file: Path) -> UsageStats:
-    """Parse usage from tail, falling back to estimation for active spawn."""
     model = "unknown"
     stats = {}
 

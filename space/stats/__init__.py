@@ -90,7 +90,6 @@ __all__ = [
 
 
 def get_summary(hours: int = 24) -> dict[str, Any]:
-    """Aggregate all stats."""
     return {
         "hours": hours,
         "artifacts_per_spawn": artifacts_per_spawn(hours),

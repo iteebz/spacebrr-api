@@ -101,7 +101,6 @@ class SilentAgent:
 
 
 def silent_agents(hours: int = 24) -> list[SilentAgent]:
-    """Find AI agents with no recent activity."""
     with store.ensure() as conn:
         rows = conn.execute(
             """

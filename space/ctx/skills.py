@@ -10,17 +10,12 @@ _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
 def list_skills() -> list[str]:
-    """List available skill names."""
     if not _SKILLS_DIR.exists():
         return []
     return sorted(p.stem for p in _SKILLS_DIR.glob("*.md"))
 
 
 def load(name: str) -> str:
-    """Load skill content by name.
-
-    Strips frontmatter if present.
-    """
     path = _SKILLS_DIR / f"{name}.md"
     if not path.exists():
         raise ValidationError(f"Unknown skill: {name}")
@@ -33,7 +28,6 @@ def load(name: str) -> str:
 
 
 def inject(names: list[str]) -> str:
-    """Compose multiple skills into single context block."""
     if not names:
         return ""
 

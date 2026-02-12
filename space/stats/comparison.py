@@ -6,7 +6,6 @@ from .swarm import artifacts_per_spawn, compounding
 
 
 def _artifacts_at(at: str, hours: int) -> list[dict[str, Any]]:
-    """Calculate artifacts/spawn ratio per agent around a timestamp."""
     with store.ensure() as conn:
         rows = conn.execute(
             """
@@ -29,7 +28,6 @@ def _artifacts_at(at: str, hours: int) -> list[dict[str, Any]]:
 
 
 def _compounding_at(at: str, hours: int = 168) -> dict[str, Any]:
-    """Measure compounding in a window ending at timestamp (via citations table)."""
     with store.ensure() as conn:
         total = conn.execute(
             """
@@ -53,7 +51,6 @@ def _compounding_at(at: str, hours: int = 168) -> dict[str, Any]:
 
 
 def rsi_comparison(commit_ts: str, hours: int = 24) -> dict[str, Any]:
-    """Compare stats before and after an RSI commit."""
     before = {
         "artifacts_per_spawn": _artifacts_at(commit_ts, hours),
         "compounding": _compounding_at(commit_ts),

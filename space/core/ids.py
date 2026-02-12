@@ -16,12 +16,6 @@ VALID_TABLES = {
 
 
 def generate(table: str, conn: sqlite3.Connection | None = None) -> str:
-    """Generate 8-char collision-free ID for table.
-
-    Retries up to 10 times if collision detected.
-    8 hex chars = 4B namespace per table.
-    At 10k records, collision probability ~0.0002%.
-    """
     if table not in VALID_TABLES:
         raise ValueError(f"Invalid table: {table}")
 

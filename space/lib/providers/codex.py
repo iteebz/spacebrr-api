@@ -8,7 +8,6 @@ from . import base
 
 
 def launch_args() -> list[str]:
-    """Return launch arguments for headless Codex execution."""
     return ["--json", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"]
 
 
@@ -24,7 +23,6 @@ def build_command(
     allowed_tools: set[tools.Tool] | None = None,
     images: list[str] | None = None,
 ) -> tuple[list[str], str | None]:
-    """Build Codex CLI launch command."""
     args = ["codex", "exec", *launch_args(), "--model", model]
     # Keep Codex workspace-root behavior aligned with other providers.
     args += ["--cd", cwd or root_dir]
@@ -136,7 +134,6 @@ def normalize_event(
 
 
 def parse_usage(events_file: Path) -> UsageStats:
-    """Parse usage from tail of file. Only needs last turn.completed event."""
     model = "unknown"
     usage = {}
 

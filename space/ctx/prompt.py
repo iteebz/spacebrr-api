@@ -137,7 +137,6 @@ def _projects_block(spawn: Spawn) -> str:
 
 
 def _routines_block() -> str:
-    """Standing behaviors — playbooks that persist across spawn."""
     all_routines = insights.fetch(domain="routine", limit=50)
     routines = [r for r in all_routines if r.open]
     if not routines:

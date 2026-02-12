@@ -89,7 +89,6 @@ def get_human() -> Agent | None:
 
 
 def at_human(content: str) -> bool:
-    """Check if content mentions @human."""
     return HUMAN_MENTION in content.lower()
 
 

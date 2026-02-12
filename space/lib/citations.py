@@ -10,7 +10,6 @@ TargetType = Literal["insight", "decision"]
 
 
 def extract(text: str) -> list[tuple[TargetType, str]]:
-    """Extract citation references from text. Returns list of (type, short_id)."""
     results: list[tuple[TargetType, str]] = []
     for match in CITATION_PATTERN.finditer(text):
         prefix, short_id = match.groups()
@@ -25,7 +24,6 @@ def store(
     source_id: str,
     text: str,
 ) -> int:
-    """Extract and store citations from text. Returns count stored."""
     citations = extract(text)
     if not citations:
         return 0
@@ -47,7 +45,6 @@ def store(
 
 
 def count_refs(conn: sqlite3.Connection, target_type: TargetType, short_id: str) -> int:
-    """Count citations pointing to a target."""
     row = conn.execute(
         "SELECT COUNT(*) FROM citations WHERE target_type = ? AND target_short_id = ?",
         (target_type, short_id),
@@ -58,7 +55,6 @@ def count_refs(conn: sqlite3.Connection, target_type: TargetType, short_id: str)
 def refs_for_target(
     conn: sqlite3.Connection, target_type: TargetType, short_id: str
 ) -> list[tuple[SourceType, str]]:
-    """Get all sources citing a target."""
     rows = conn.execute(
         "SELECT source_type, source_id FROM citations WHERE target_type = ? AND target_short_id = ?",
         (target_type, short_id),

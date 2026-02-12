@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 def swarm_age() -> int:
-    """Days since the first agent was created."""
     with store.ensure() as conn:
         row = conn.execute("SELECT MIN(created_at) FROM agents").fetchone()
         if not row or not row[0]:
@@ -58,7 +57,6 @@ def _last_artifacts(agent_ids: list[str]) -> dict[str, tuple[str, str, str]]:
 
 
 def live() -> list[dict[str, Any]]:
-    """All AI agents with context % and last artifact."""
     all_agents = agents.fetch(type="ai")
     if not all_agents:
         return []
@@ -122,7 +120,6 @@ def live() -> list[dict[str, Any]]:
 
 
 def snapshot() -> dict[str, Any]:
-    """Agent-facing swarm snapshot for mid-session context."""
     with store.ensure() as conn:
         active_spawns = conn.execute(
             """

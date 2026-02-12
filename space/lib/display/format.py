@@ -70,7 +70,6 @@ def format_duration(seconds: float) -> str:
 
 
 def parse_duration(spec: str) -> timedelta:
-    """Parse duration like '30m', '2h', '1d', '2w', '2h30m'."""
     spec = (spec or "").strip().lower()
     if not spec:
         raise ValueError("duration required")
@@ -85,7 +84,6 @@ def parse_duration(spec: str) -> timedelta:
 
 
 def agent_name(agent: Agent | None, fallback: str = "unknown") -> str:
-    """Format agent name with type suffix."""
     if not agent:
         return fallback
     suffix = "(human)" if agent.type == "human" else "(ai)"

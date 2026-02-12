@@ -154,7 +154,6 @@ def eligible_agents() -> list[Agent]:
 
 
 def active_sovereign() -> list[Spawn]:
-    """Fetch only sovereign spawns with status active."""
 
     return spawn.fetch(status="active", mode=SpawnMode.SOVEREIGN)
 

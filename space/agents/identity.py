@@ -38,7 +38,6 @@ class Identity:
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
-    """Extract YAML frontmatter and body from markdown."""
     if not text.startswith("---"):
         return {}, text
 
@@ -64,7 +63,6 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
 
 
 def load(name: str) -> Identity:
-    """Load identity with parsed frontmatter."""
     path = ctx.identity_path(name)
     if not path.exists():
         raise NotFoundError(f"Identity '{name}' not found")
@@ -87,7 +85,6 @@ def load(name: str) -> Identity:
 
 
 def get(name: str) -> str:
-    """Get raw identity content."""
     path = ctx.identity_path(name)
     if not path.exists():
         raise NotFoundError(f"Identity '{name}' not found")

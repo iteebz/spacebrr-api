@@ -504,7 +504,6 @@ def _render_code(*, show_trend: bool = False, json_output: bool = False) -> None
 
 @space_cmd("health")
 def main() -> None:
-    """Database and code health checks."""
     parser = argparse.ArgumentParser(prog="health", description="Database and code health checks")
     parser.add_argument("--repair-fks", action="store_true", help="Repair FK violations")
     parser.add_argument("-c", "--code", action="store_true", help="Include code health")

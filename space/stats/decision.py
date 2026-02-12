@@ -23,13 +23,6 @@ def flow() -> dict[str, int]:
 
 
 def reversal_rate() -> dict[str, Any]:
-    """Committed decisions later rejected. Measures premature commitment.
-
-    Categorizes reversals by analyzing rejection rationale in replies:
-    - error: agent was wrong (flawed logic, incorrect assessment)
-    - obsolete: conditions changed (superseded, no longer relevant)
-    - unclear: no rationale or ambiguous
-    """
     with store.ensure() as conn:
         total_committed = conn.execute(
             """
@@ -232,11 +225,6 @@ def precision() -> dict[str, Any]:
 
 
 def challenge_rate() -> dict[str, Any]:
-    """Measure decisions receiving dissent before commit.
-
-    Challenge = reply from different agent between created_at and committed_at.
-    Per arxiv paper: adversarial oversight metric for constitutional orthogonality.
-    """
     with store.ensure() as conn:
         total_committed = conn.execute(
             """

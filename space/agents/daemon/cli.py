@@ -25,7 +25,6 @@ def _daemon_start() -> tuple[dict[str, Any], str]:
 
 @space_cmd("daemon")
 def main() -> None:
-    """Manage daemon process."""
     parser = argparse.ArgumentParser(prog="daemon", description="Manage daemon process")
     parser.add_argument("action", nargs="?", default="status", help="start|stop|restart|status")
     parser.add_argument("-j", "--json", action="store_true", dest="json_output", help="Output JSON")

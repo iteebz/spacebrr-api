@@ -93,6 +93,5 @@ STOPWORDS = frozenset(
 
 
 def extract_terms(content: str, max_terms: int = 6) -> list[str]:
-    """Extract significant terms from content for FTS matching."""
     words = re.findall(r"[a-z][a-z0-9-]+", content.lower())
     return [w for w in words if w not in STOPWORDS and len(w) > 2][:max_terms]

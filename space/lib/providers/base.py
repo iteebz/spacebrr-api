@@ -37,7 +37,6 @@ def stringify_content(content: Any) -> str:
 
 
 def iter_jsonl(path: Path, *, label: str) -> Iterator[dict[str, Any]]:
-    """Iterate JSONL file as dict events; logs decode errors with line previews."""
     try:
         with Path(path).open() as f:
             for line in f:
@@ -63,7 +62,6 @@ def iter_jsonl(path: Path, *, label: str) -> Iterator[dict[str, Any]]:
 
 
 def iter_jsonl_tail(path: Path, *, label: str, max_lines: int = 50) -> Iterator[dict[str, Any]]:
-    """Iterate last N lines of JSONL file in reverse order (most recent first)."""
     try:
         file_size = path.stat().st_size
         if file_size == 0:

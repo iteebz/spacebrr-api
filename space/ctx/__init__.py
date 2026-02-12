@@ -39,7 +39,6 @@ def identity_path(name: str) -> Path:
 
 
 def inject(spawn: Spawn, agent: Agent, cwd: Path | None = None) -> Path:
-    """Write system prompt to provider-specific file."""
     target_dir = paths.identity_dir(agent.handle)
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -74,7 +73,6 @@ def _resolve_preview_agent(handle: str) -> Agent:
 def wake(
     spawn: Spawn | None = None, cwd: str | Path | None = None, *, identity: str | None = None
 ) -> str:
-    """Fresh spawn context or preview context."""
     if spawn is not None:
         if identity is not None:
             raise ValidationError("spawn mode cannot be combined with identity")
