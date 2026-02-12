@@ -1,25 +1,46 @@
 # Deployment
 
-## Prerequisites
+## Current Status
 
-1. **GitHub OAuth App**
-   - Create at https://github.com/settings/developers
-   - Callback URL: `https://spacebrr-api.fly.dev/auth/github/callback`
-   - Note `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+Server live at https://spacebrr-api.fly.dev (deployed, healthy).
 
-2. **Stripe**
-   - Create product + price at https://dashboard.stripe.com/products
-   - Note `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`
-   - Webhook endpoint: `https://spacebrr-api.fly.dev/api/webhook/stripe`
+**Functional**: OAuth, waitlist, repo listing, provision endpoints.
+
+**Blocked**: Payment checkout (503) — requires Stripe secrets.
+
+## Activate Payment
+
+1. **Create Stripe Price** (if not exists)
+   - Go to https://dashboard.stripe.com/products
+   - Create product "Space Swarm" + price $1000/month recurring
+   - Copy price ID (starts with `price_`)
+
+2. **Create Stripe Webhook** (if not exists)
+   - Go to https://dashboard.stripe.com/webhooks
+   - Add endpoint: `https://spacebrr-api.fly.dev/api/webhook/stripe`
    - Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+   - Copy signing secret (starts with `whsec_`)
 
-3. **Fly.io Setup**
+3. **Set Fly Secrets**
    ```bash
-   fly apps create spacebrr-api
-   fly secrets set GITHUB_CLIENT_ID="..." GITHUB_CLIENT_SECRET="..."
-   fly secrets set GITHUB_REDIRECT_URI="https://spacebrr-api.fly.dev/auth/github/callback"
-   fly secrets set STRIPE_SECRET_KEY="sk_live_..." STRIPE_WEBHOOK_SECRET="whsec_..." STRIPE_PRICE_ID="price_..."
+   fly secrets set \
+     STRIPE_SECRET_KEY="sk_test_..." \
+     STRIPE_PUBLISHABLE_KEY="pk_test_..." \
+     STRIPE_PRICE_ID="price_..." \
+     STRIPE_WEBHOOK_SECRET="whsec_..."
    ```
+
+4. **Test**
+   - Visit https://spacebrr.com/select
+   - OAuth with GitHub
+   - Click "Subscribe" → should redirect to Stripe checkout
+   - Complete test payment
+   - Verify subscription status active
+
+## Prerequisites (reference)
+
+- **GitHub OAuth App**: Already configured (live).
+- **Fly.io App**: Already created (`spacebrr-api`).
 
 ## Deploy
 
