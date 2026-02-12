@@ -13,12 +13,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const execFileAsync = promisify(execFile)
 const app = express()
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
-})
-
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID
+
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, {
+  apiVersion: '2024-12-18.acacia',
+}) : null
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
@@ -309,7 +310,7 @@ app.post('/api/checkout', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  if (!STRIPE_PRICE_ID) {
+  if (!stripe || !STRIPE_PRICE_ID) {
     return res.status(503).json({ error: 'Stripe not configured' })
   }
 
@@ -355,7 +356,7 @@ app.get('/api/subscription', async (req, res) => {
 app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature']
   
-  if (!sig || !STRIPE_WEBHOOK_SECRET) {
+  if (!stripe || !sig || !STRIPE_WEBHOOK_SECRET) {
     return res.status(400).send('Webhook signature or secret missing')
   }
 
