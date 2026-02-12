@@ -29,34 +29,53 @@ from space.lib.display import ansi
 from space.lib.display.format import ago
 
 
-def _resolve_agent(ref: str | None) -> Agent:
-    agent_id = ref or identity_lib.current()
-    if not agent_id:
-        fail("Missing: --as or SPACE_IDENTITY")
-    return agents.get_by_handle(agent_id)
+def _out(msg: str) -> None:
+    sys.stdout.write(msg)
+
+
+def _decision_mark(d: Decision) -> str:
+    if d.rejected_at:
+        return "✗"
+    if d.actioned_at:
+        return "✓"
+    if d.committed_at:
+        return "◆"
+    return "◇"
+
+
+def _decision_status(d: Decision) -> tuple[str, Callable[[str], str]]:
+    if d.rejected_at:
+        return "✗ REJECTED", ansi.red
+    if d.actioned_at:
+        return "✓ ACTIONED", ansi.green
+    if d.committed_at:
+        return "◆ COMMITTED", ansi.yellow
+    return "◇ PROPOSED", ansi.gray
+
+
+def _fmt(label: str, value: str, tty: bool) -> str:
+    if tty:
+        return f"{ansi.dim(label)} {ansi.gray(value)}"
+    return f"{label} {value}"
+
+
+def _resolve_agent(ref: str | None = None) -> Agent:
+    return agents.get_by_handle(ref or identity_lib.current() or fail("Missing: --as or SPACE_IDENTITY"))
 
 
 def route(args: argparse.Namespace) -> None:
-    if args.action == "add":
-        _add(args)
-    elif args.action == "list":
-        _list(args)
-    elif args.action == "show":
-        _show(args)
-    elif args.action == "inbox":
-        _inbox(args)
-    elif args.action == "commit":
-        _commit(args)
-    elif args.action == "reject":
-        _reject(args)
-    elif args.action == "action":
-        _action(args)
-    elif args.action == "search":
-        _search(args)
-    elif args.action == "close":
-        _close(args)
-    elif args.action == "cancel":
-        _cancel(args)
+    {
+        "add": _add,
+        "list": _list,
+        "show": _show,
+        "inbox": _inbox,
+        "commit": _commit,
+        "reject": _reject,
+        "action": _action,
+        "search": _search,
+        "close": _close,
+        "cancel": _cancel,
+    }[args.action](args)
 
 
 def _add(args: argparse.Namespace) -> None:
@@ -85,12 +104,12 @@ def _add(args: argparse.Namespace) -> None:
                 args.domain,
                 spawn_id=spawn_id,
             )
-            sys.stdout.write(f"{store.ref('insights', entry.id)}\n")
+            _out(f"{store.ref('insights', entry.id)}\n")
         except ValidationError as e:
             fail(str(e))
     elif type_arg == "t":
         entry = tasks.create(project_id, agent.id, content, spawn_id=spawn_id)
-        sys.stdout.write(f"{store.ref('tasks', entry.id)}\n")
+        _out(f"{store.ref('tasks', entry.id)}\n")
     elif type_arg == "d":
         if not args.why:
             fail("--why <rationale> required for decision add")
@@ -103,7 +122,7 @@ def _add(args: argparse.Namespace) -> None:
                 spawn_id=spawn_id,
                 refs=args.refs,
             )
-            sys.stdout.write(f"{store.ref('decisions', entry.id)}\n")
+            _out(f"{store.ref('decisions', entry.id)}\n")
         except ValidationError as e:
             fail(str(e))
     elif type_arg == "r":
@@ -113,13 +132,13 @@ def _add(args: argparse.Namespace) -> None:
         message = " ".join(content_args[1:])
         try:
             reply_entry = replies.create_by_ref(ref, agent.id, message, spawn_id=spawn_id)
-            sys.stdout.write(f"{store.ref('replies', reply_entry.id)}\n")
+            _out(f"{store.ref('replies', reply_entry.id)}\n")
         except (ValidationError, NotFoundError) as e:
             fail(str(e))
     elif type_arg == "p":
         try:
             project_entry = projects.create(content_args[0])
-            sys.stdout.write(f"Project: {project_entry.name} ({project_entry.id[:8]})\n")
+            _out(f"Project: {project_entry.name} ({project_entry.id[:8]})\n")
         except Exception as e:
             fail(str(e))
     else:
@@ -133,7 +152,7 @@ def _list(args: argparse.Namespace) -> None:
     if type_arg == "all":
         items = ledger.fetch(limit=50, project_id=project_id)
         for item in items:
-            sys.stdout.write(f"[{item.created_at}] {item.handle}: {item.content}\n")
+            _out(f"[{item.created_at}] {item.handle}: {item.content}\n")
 
     elif type_arg == "i":
         entries = insights.fetch(project_id=project_id, limit=50)
@@ -143,30 +162,22 @@ def _list(args: argparse.Namespace) -> None:
                 handle = agent.handle
             except NotFoundError:
                 handle = "unknown"
-            sys.stdout.write(f"[{store.ref('insights', e.id)}] @{handle}: {e.content}\n")
+            _out(f"[{store.ref('insights', e.id)}] @{handle}: {e.content}\n")
     elif type_arg == "t":
         task_list = tasks.fetch(project_id=project_id, limit=50)
         for t in task_list:
             mark = "✓" if t.status == TaskStatus.DONE else " "
             ref = store.ref("tasks", t.id)
-            sys.stdout.write(f"{mark} {ref} {t.content}\n")
+            _out(f"{mark} {ref} {t.content}\n")
     elif type_arg == "d":
         decision_list = decisions.fetch(project_id=project_id, limit=50)
         for d in decision_list:
-            if d.rejected_at:
-                mark = "✗"
-            elif d.actioned_at:
-                mark = "✓"
-            elif d.committed_at:
-                mark = "◆"
-            else:
-                mark = "◇"
             ref = store.ref("decisions", d.id)
-            sys.stdout.write(f"{mark} {ref} {d.content}\n")
+            _out(f"{_decision_mark(d)} {ref} {d.content}\n")
     elif type_arg == "p":
         project_list = projects.fetch()
         if not project_list:
-            sys.stdout.write("No projects found.\n")
+            _out("No projects found.\n")
             return
 
         project_ids = [p.id for p in project_list]
@@ -195,13 +206,13 @@ def _list(args: argparse.Namespace) -> None:
         act_w = max(len(r[2]) for r in rows)
         path_w = max(len(r[3]) for r in rows)
 
-        sys.stdout.write(
+        _out(
             f"{'name':<{name_w}} {'artifacts':<{art_w}} {'active':<{act_w}} {'path':<{path_w}} {'tags'}\n"
         )
-        sys.stdout.write("-" * (name_w + art_w + act_w + path_w + 20) + "\n")
+        _out("-" * (name_w + art_w + act_w + path_w + 20) + "\n")
 
         for name, count, last, path, tags in rows:
-            sys.stdout.write(
+            _out(
                 f"{name:<{name_w}} {count:<{art_w}} {last:<{act_w}} {path:<{path_w}} {tags}\n"
             )
     else:
@@ -218,9 +229,9 @@ def _show(args: argparse.Namespace) -> None:
     if "/" not in ref:
         try:
             project = store.resolve(ref, "projects", Project)
-            sys.stdout.write(f"Project: {project.name}\n")
-            sys.stdout.write(f"ID: {project.id}\n")
-            sys.stdout.write(f"Repo: {project.repo_path}\n")
+            _out(f"Project: {project.name}\n")
+            _out(f"ID: {project.id}\n")
+            _out(f"Repo: {project.repo_path}\n")
             return
         except NotFoundError:
             pass
@@ -295,8 +306,8 @@ def _show_json(main_item, thread_items, ref: str, item_type: str) -> None:
             }
             for item in thread_items
         ]
-    sys.stdout.write(json.dumps(data, indent=2))
-    sys.stdout.write("\n")
+    _out(json.dumps(data, indent=2))
+    _out("\n")
 
 
 def _show_formatted(main_item, thread_items, ref: str, item_type: str) -> None:
@@ -313,96 +324,71 @@ def _show_formatted(main_item, thread_items, ref: str, item_type: str) -> None:
 
     if thread_items:
         if tty:
-            sys.stdout.write(f"\n{ansi.dim('─' * 40)}\n")
-            sys.stdout.write(f"{ansi.gray(f'{len(thread_items)} related')}\n\n")
+            _out(f"\n{ansi.dim('─' * 40)}\n")
+            _out(f"{ansi.gray(f'{len(thread_items)} related')}\n\n")
         else:
-            sys.stdout.write(f"\n--- {len(thread_items)} related ---\n")
+            _out(f"\n--- {len(thread_items)} related ---\n")
 
         for item in thread_items:
             item_ref = f"{item.type[0]}/{item.id[:8]}"
             if tty:
-                sys.stdout.write(f"  {ansi.cyan(item_ref)} ")
-                sys.stdout.write(f"{ansi.dim('@')}{ansi.gray(item.handle)}: ")
-                sys.stdout.write(f"{ansi.dim(item.content[:80])}\n")
+                _out(f"  {ansi.cyan(item_ref)} ")
+                _out(f"{ansi.dim('@')}{ansi.gray(item.handle)}: ")
+                _out(f"{ansi.dim(item.content[:80])}\n")
             else:
-                sys.stdout.write(f"  {item_ref} @{item.handle}: {item.content[:80]}\n")
+                _out(f"  {item_ref} @{item.handle}: {item.content[:80]}\n")
 
 
 def _render_generic(item, ref: str, tty: bool) -> None:
     if tty:
-        sys.stdout.write(f"{ansi.bold('[')}{ansi.cyan(ref)}{ansi.bold(']')} ")
-        sys.stdout.write(f"{ansi.dim('@')}{ansi.gray(item.handle)}: ")
-        sys.stdout.write(f"{ansi.white(item.content)}\n")
+        _out(f"{ansi.bold('[')}{ansi.cyan(ref)}{ansi.bold(']')} ")
+        _out(f"{ansi.dim('@')}{ansi.gray(item.handle)}: ")
+        _out(f"{ansi.white(item.content)}\n")
     else:
-        sys.stdout.write(f"[{ref}] @{item.handle}: {item.content}\n")
+        _out(f"[{ref}] @{item.handle}: {item.content}\n")
 
     if item.rationale:
         label = ansi.dim("Rationale:") if tty else "Rationale:"
-        sys.stdout.write(f"{label} {item.rationale}\n")
+        _out(f"{label} {item.rationale}\n")
     if item.status:
         label = ansi.dim("Status:") if tty else "Status:"
         status = ansi.bold(item.status) if tty else item.status
-        sys.stdout.write(f"{label} {status}\n")
+        _out(f"{label} {status}\n")
 
 
 def _render_decision_card(decision: Decision, ref: str, tty: bool) -> None:
-    color: Callable[[str], str]
-    if decision.rejected_at:
-        mark = "✗ REJECTED"
-        color = ansi.red if tty else (lambda x: x)
-    elif decision.actioned_at:
-        mark = "✓ ACTIONED"
-        color = ansi.green if tty else (lambda x: x)
-    elif decision.committed_at:
-        mark = "◆ COMMITTED"
-        color = ansi.yellow if tty else (lambda x: x)
-    else:
-        mark = "◇ PROPOSED"
-        color = ansi.gray if tty else (lambda x: x)
-
+    mark, color = _decision_status(decision)
     if tty:
-        sys.stdout.write(f"{ansi.bold(color(mark))} {ansi.cyan(ref)}\n")
-        sys.stdout.write(f"{ansi.dim('─' * 40)}\n")
+        _out(f"{ansi.bold(color(mark))} {ansi.cyan(ref)}\n{ansi.dim('─' * 40)}\n")
     else:
-        sys.stdout.write(f"{mark} {ref}\n")
-        sys.stdout.write("─" * 40 + "\n")
+        _out(f"{mark} {ref}\n{'─' * 40}\n")
 
-    sys.stdout.write(f"{decision.content}\n\n")
+    _out(f"{decision.content}\n\n")
 
     agent = agents.get(decision.agent_id)
-    if tty:
-        sys.stdout.write(f"{ansi.dim('Author:')} {ansi.gray(f'@{agent.handle}')}\n")
-        sys.stdout.write(f"{ansi.dim('Created:')} {ansi.gray(ago(decision.created_at))}\n")
-    else:
-        sys.stdout.write(f"Author: @{agent.handle}\n")
-        sys.stdout.write(f"Created: {ago(decision.created_at)}\n")
+    _out(f"{_fmt('Author:', f'@{agent.handle}', tty)}\n")
+    _out(f"{_fmt('Created:', ago(decision.created_at), tty)}\n")
 
     if decision.committed_at:
-        label = ansi.dim("Committed:") if tty else "Committed:"
-        value = ansi.gray(ago(decision.committed_at)) if tty else ago(decision.committed_at)
-        sys.stdout.write(f"{label} {value}\n")
+        _out(f"{_fmt('Committed:', ago(decision.committed_at), tty)}\n")
     if decision.actioned_at:
-        label = ansi.dim("Actioned:") if tty else "Actioned:"
-        value = ansi.gray(ago(decision.actioned_at)) if tty else ago(decision.actioned_at)
-        sys.stdout.write(f"{label} {value}\n")
+        _out(f"{_fmt('Actioned:', ago(decision.actioned_at), tty)}\n")
     if decision.rejected_at:
-        label = ansi.dim("Rejected:") if tty else "Rejected:"
-        value = ansi.gray(ago(decision.rejected_at)) if tty else ago(decision.rejected_at)
-        sys.stdout.write(f"{label} {value}\n")
+        _out(f"{_fmt('Rejected:', ago(decision.rejected_at), tty)}\n")
 
     if decision.rationale:
-        sys.stdout.write("\n")
+        _out("\n")
         if tty:
-            sys.stdout.write(f"{ansi.dim('Rationale:')}\n{ansi.gray(decision.rationale)}\n")
+            _out(f"{ansi.dim('Rationale:')}\n{ansi.gray(decision.rationale)}\n")
         else:
-            sys.stdout.write(f"Rationale:\n{decision.rationale}\n")
+            _out(f"Rationale:\n{decision.rationale}\n")
 
     if hasattr(decision, "outcome") and decision.outcome:
-        sys.stdout.write("\n")
+        _out("\n")
         if tty:
-            sys.stdout.write(f"{ansi.dim('Outcome:')}\n{ansi.gray(decision.outcome)}\n")
+            _out(f"{ansi.dim('Outcome:')}\n{ansi.gray(decision.outcome)}\n")
         else:
-            sys.stdout.write(f"Outcome:\n{decision.outcome}\n")
+            _out(f"Outcome:\n{decision.outcome}\n")
 
 
 def _inbox(args: argparse.Namespace) -> None:
@@ -412,16 +398,16 @@ def _inbox(args: argparse.Namespace) -> None:
     project_id = projects.get_scope(args.project) if hasattr(args, "project") else None
     items = inbox.fetch(current_handle, project_id=project_id)
     if not items:
-        sys.stdout.write("Inbox empty\n")
+        _out("Inbox empty\n")
         return
 
     if args.json:
-        sys.stdout.write(json.dumps([asdict(i) for i in items], indent=2))
-        sys.stdout.write("\n")
+        _out(json.dumps([asdict(i) for i in items], indent=2))
+        _out("\n")
         return
 
     for item in items:
-        sys.stdout.write(f"[{item.type[0]}/{item.id[:8]}] {item.reason}: {item.content[:100]}\n")
+        _out(f"[{item.type[0]}/{item.id[:8]}] {item.reason}: {item.content[:100]}\n")
 
 
 def _commit(args: argparse.Namespace) -> None:
@@ -432,10 +418,10 @@ def _commit(args: argparse.Namespace) -> None:
         decision = store.resolve(decision_ref, "decisions", Decision)
         updated = decisions.commit(decision.id)
         if args.json:
-            sys.stdout.write(json.dumps(asdict(updated), indent=2))
-            sys.stdout.write("\n")
+            _out(json.dumps(asdict(updated), indent=2))
+            _out("\n")
         else:
-            sys.stdout.write(f"Committed: {store.ref('decisions', decision.id)}\n")
+            _out(f"Committed: {store.ref('decisions', decision.id)}\n")
     except (NotFoundError, ValidationError) as e:
         fail(str(e))
 
@@ -448,10 +434,10 @@ def _reject(args: argparse.Namespace) -> None:
         decision = store.resolve(decision_ref, "decisions", Decision)
         updated = decisions.reject(decision.id)
         if args.json:
-            sys.stdout.write(json.dumps(asdict(updated), indent=2))
-            sys.stdout.write("\n")
+            _out(json.dumps(asdict(updated), indent=2))
+            _out("\n")
         else:
-            sys.stdout.write(f"Rejected: {store.ref('decisions', decision.id)}\n")
+            _out(f"Rejected: {store.ref('decisions', decision.id)}\n")
     except (NotFoundError, ValidationError) as e:
         fail(str(e))
 
@@ -464,12 +450,12 @@ def _action(args: argparse.Namespace) -> None:
         decision = store.resolve(decision_ref, "decisions", Decision)
         updated = decisions.action(decision.id, outcome=args.outcome)
         if args.json:
-            sys.stdout.write(json.dumps(asdict(updated), indent=2))
-            sys.stdout.write("\n")
+            _out(json.dumps(asdict(updated), indent=2))
+            _out("\n")
         else:
-            sys.stdout.write(f"Actioned: {store.ref('decisions', decision.id)}\n")
+            _out(f"Actioned: {store.ref('decisions', decision.id)}\n")
             if args.outcome:
-                sys.stdout.write(f"Outcome: {args.outcome}\n")
+                _out(f"Outcome: {args.outcome}\n")
     except (NotFoundError, ValidationError) as e:
         fail(str(e))
 
@@ -500,20 +486,20 @@ def _search(args: argparse.Namespace) -> None:
             }
             for r in results
         ]
-        sys.stdout.write(json.dumps({"query": query_str, "results": data}, indent=2))
-        sys.stdout.write("\n")
+        _out(json.dumps({"query": query_str, "results": data}, indent=2))
+        _out("\n")
     else:
         if not results:
-            sys.stdout.write(f"No results for '{query_str}'\n")
+            _out(f"No results for '{query_str}'\n")
             return
 
-        sys.stdout.write(f"Found {len(results)} results:\n\n")
+        _out(f"Found {len(results)} results:\n\n")
         for result in results:
             content = result.content.replace("\n", " ").strip()
             if len(content) > 200:
                 content = content[:197] + "..."
-            sys.stdout.write(f"[{result.source}] {result.reference}\n")
-            sys.stdout.write(f"  {content}\n\n")
+            _out(f"[{result.source}] {result.reference}\n")
+            _out(f"  {content}\n\n")
 
 
 def _close(args: argparse.Namespace) -> None:
@@ -524,7 +510,7 @@ def _close(args: argparse.Namespace) -> None:
         task = store.resolve(task_ref, "tasks", Task)
         agent = _resolve_agent(None)
         tasks.set_status(task.id, TaskStatus.DONE, agent_id=agent.id)
-        sys.stdout.write(f"Closed: {store.ref('tasks', task.id)}\n")
+        _out(f"Closed: {store.ref('tasks', task.id)}\n")
     except (NotFoundError, ValidationError, StateError) as e:
         fail(str(e))
 
@@ -537,7 +523,7 @@ def _cancel(args: argparse.Namespace) -> None:
         task = store.resolve(task_ref, "tasks", Task)
         agent = _resolve_agent(None)
         tasks.set_status(task.id, TaskStatus.CANCELLED, agent_id=agent.id)
-        sys.stdout.write(f"Cancelled: {store.ref('tasks', task.id)}\n")
+        _out(f"Cancelled: {store.ref('tasks', task.id)}\n")
     except (NotFoundError, ValidationError, StateError) as e:
         fail(str(e))
 
@@ -558,8 +544,8 @@ def status_cmd(agent_handle: str | None = None, json_output: bool = False) -> No
             ],
             "inbox": [{"id": i.id, "content": i.content} for i in data.inbox],
         }
-        sys.stdout.write(json.dumps(payload, indent=2))
-        sys.stdout.write("\n")
+        _out(json.dumps(payload, indent=2))
+        _out("\n")
         return
 
     for project in data.projects:
@@ -572,14 +558,14 @@ def status_cmd(agent_handle: str | None = None, json_output: bool = False) -> No
             needs.append(f"{project.committed_decisions} decisions")
 
         if needs:
-            sys.stdout.write(f"**{project.name}**: {', '.join(needs)}\n")
+            _out(f"**{project.name}**: {', '.join(needs)}\n")
         else:
-            sys.stdout.write(f"**{project.name}**: clear\n")
+            _out(f"**{project.name}**: clear\n")
 
     if data.inbox:
-        sys.stdout.write("\n## Inbox\n")
+        _out("\n## Inbox\n")
         for item in data.inbox:
-            sys.stdout.write(f"  [{item.parent_type[0]}/{item.parent_id}] {item.content[:60]}...\n")
+            _out(f"  [{item.parent_type[0]}/{item.parent_id}] {item.content[:60]}...\n")
 
 
 def main() -> None:
