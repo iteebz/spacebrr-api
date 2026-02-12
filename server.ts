@@ -331,15 +331,8 @@ app.get('/dashboard/:projectId', (req, res) => {
   `)
 })
 
-app.get('/api/health', async (req, res) => {
-  try {
-    const healthScript = path.join(__dirname, 'space', 'stats', 'public.py')
-    const pythonCode = `import sys; sys.path.insert(0, '${path.join(__dirname, 'space')}'); from stats.public import get; import json; print(json.dumps(get()))`
-    const { stdout } = await execFileAsync('python3', ['-c', pythonCode])
-    res.json(JSON.parse(stdout))
-  } catch (error: any) {
-    res.status(500).json({ error: error.message })
-  }
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
 app.post('/api/webhook/github', async (req, res) => {
