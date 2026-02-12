@@ -6,11 +6,19 @@ import path from 'path'
 import fs from 'fs/promises'
 import os from 'os'
 import { fileURLToPath } from 'url'
+import Stripe from 'stripe'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const execFileAsync = promisify(execFile)
 const app = express()
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-12-18.acacia',
+})
+
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
+const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
@@ -20,7 +28,13 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(express.json())
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/webhook/stripe') {
+    next()
+  } else {
+    express.json()(req, res, next)
+  }
+})
 
 const PORT = process.env.PORT || 3000
 
@@ -28,7 +42,7 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET
 const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback'
 
-const sessions = new Map<string, { token: string, githubUser: string }>()
+const sessions = new Map<string, { token: string, githubUser: string, customerId?: string, subscriptionStatus?: string }>()
 const oauthStates = new Map<string, { created: number }>()
 
 app.get('/auth/github', (req, res) => {
@@ -276,6 +290,98 @@ app.post('/api/waitlist', async (req, res) => {
     res.json({ success: true })
   } catch (error: any) {
     res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/checkout', async (req, res) => {
+  const sessionId = req.headers.authorization?.replace('Bearer ', '')
+  const session = sessionId ? sessions.get(sessionId) : null
+  
+  if (!session) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  if (!STRIPE_PRICE_ID) {
+    return res.status(503).json({ error: 'Stripe not configured' })
+  }
+
+  try {
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: STRIPE_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      success_url: `${req.headers.origin || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.origin || 'http://localhost:3000'}/select`,
+      customer_email: session.githubUser ? `${session.githubUser}@users.noreply.github.com` : undefined,
+      metadata: {
+        session_id: sessionId,
+        github_user: session.githubUser,
+      },
+    })
+
+    res.json({ url: checkoutSession.url })
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/api/subscription', async (req, res) => {
+  const sessionId = req.headers.authorization?.replace('Bearer ', '')
+  const session = sessionId ? sessions.get(sessionId) : null
+  
+  if (!session) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  res.json({
+    customer_id: session.customerId,
+    status: session.subscriptionStatus || 'none',
+  })
+})
+
+app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature']
+  
+  if (!sig || !STRIPE_WEBHOOK_SECRET) {
+    return res.status(400).send('Webhook signature or secret missing')
+  }
+
+  try {
+    const event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET)
+
+    if (event.type === 'checkout.session.completed') {
+      const checkoutSession = event.data.object as Stripe.Checkout.Session
+      const metadata = checkoutSession.metadata
+      const sessionId = metadata?.session_id
+      
+      if (sessionId && sessions.has(sessionId)) {
+        const session = sessions.get(sessionId)!
+        session.customerId = checkoutSession.customer as string
+        session.subscriptionStatus = 'active'
+        sessions.set(sessionId, session)
+      }
+    }
+
+    if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object as Stripe.Subscription
+      const customerId = subscription.customer as string
+      
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.customerId === customerId) {
+          session.subscriptionStatus = subscription.status
+          sessions.set(sessionId, session)
+        }
+      }
+    }
+
+    res.json({ received: true })
+  } catch (error: any) {
+    res.status(400).send(`Webhook Error: ${error.message}`)
   }
 })
 
